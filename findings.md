@@ -441,6 +441,10 @@ The only call to `MstarSharedObjectManager::GetSymbolAddress()` in `WebUIService
 
 The same library imports `popen()`, but its only call site is `detect_process()`. It builds fixed process-presence checks (`ps | grep -c %s` / `ps w | grep -c %s`) and the observed caller passes the compiled constant `sraf_browser_bin`; this is not a caller-controlled shell sink. No `system()`/`exec*()` path was found through the browser-client bridge. Detailed evidence is in `analysis/browser-client-audit.md`.
 
+### DIAL launcher audit (2026-10-22)
+
+`dialserver` imports `fork()` and `execv()`, but the call is a non-shell helper receiving an executable path and argv vector. The visible main path only creates DIAL, registers the configured applications, starts the server, and calls `run_ssdp()`. `dialappsetting.ini` exposes fixed app names and origins; the Amazon entry has a payload prefix but no executable path. The Netflix payload file is `/dev/shm/dial_argv` (volatile tmpfs). No direct main-path call or network-controlled executable path was established, and no shell import exists. DIAL remains an app-control surface, not a confirmed root execution path. Detailed evidence is in `analysis/dial-audit.md`.
+
 ### APM `system()` call-site review (2026-10-22)
 
 `appmgr` imports `system()`, but its eight call sites are lifecycle/storage helpers. The embedded command templates are `cp -f %s %s`, `sync`, `mkdir -p`, `mount -o loop`, and `umount`; the surrounding code supplies paths from internal app/config and tmpfs handling. The app configuration's `kill_list_*` values are resolved as registered application names and used for lifecycle control, not concatenated into these shell strings. No `APM_SendEventEx`/WebUI event-data path to `system()` was found in the reviewed call sites. This removes another apparent APM-to-shell shortcut; the remaining event-12 receiver is still unidentified offline.
