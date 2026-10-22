@@ -273,3 +273,15 @@ The public Chromium record for CVE-2016-1612 is issue `497632`; its fix was merg
 ### Neutral WebSocket canary (2026-10-22)
 
 On TCP/7681, a WebSocket handshake to `/remote/hbbtv/safe-canary-20261022` returned `101 Switching Protocols`. One 66-byte masked text frame was then sent: `{"type":"probe","marker":"chiqtvhack-safe-canary","action":"none"}`. The TV returned no application response during a two-second observation window; the client sent a normal close (`1000`). Ports `7681`, `3697`, `56789`, and `56790` remained reachable afterward. No exploit syntax, malformed frame, file path, command, or state-changing control message was sent.
+
+### WebUI/APM deep dive (2026-10-22)
+
+The ARM disassembly reconstructs the WebUI dispatcher as a fixed hash table. `RegisterSessionOwner` is handled separately; the dispatcher contains the other 14 public methods. The strings `GetSymbolAddress`, `LoadSharedObject`, and `UnloadSharedObject` are present only as internal helper/debug strings and are not registered network commands.
+
+`OpenApp(appName, deepLink)` passes the selected application and a length-counted parameter to APM (`APM_RequestToRun`/`APM_RequestToRunWithParam`). The input is built with `std::string`; no shell formatter, `system()`, `exec*`, or fixed-size copy is present in this WebUI path. Netflix, Cobalt YouTube, and YouTube Kids receive fixed prefixes; other app names are resolved by APM's configured application table.
+
+`OpenNativeUI(command)` prepends the fixed event prefix `open_from_webui: ` and sends it through APM event/request APIs. The command length is calculated with `strlen()` and passed as an event size; no shell invocation is present in this function. The shipped UI configuration exposes only `open_miracast: default`, `open_media_player: main`, and `open_settings: default` native actions.
+
+`GetAppNameFromUrl()` uses an exact URL-map lookup, not a prefix or wildcard match. The fixed `file:///index.html` owner registration therefore bypasses session ownership but does not provide arbitrary URL-to-app mapping.
+
+Live read-only verification reached all getter methods normally. A direct `GetSymbolAddress` request produced no response, while a fresh session continued to answer `GetApiVersion` and `GetNetworkInfo`; no remote loader or symbol lookup was observed. The remaining useful WebUI work is receiver-side parsing of the APM `open_from_webui:` event, which requires offline inspection only; no state-changing WebUI method was sent in this review.
