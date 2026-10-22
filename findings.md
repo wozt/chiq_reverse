@@ -539,3 +539,9 @@ The same audit found a conditional QJY telemetry crash candidate: its libcurl wr
 The existing artifact `artifacts/official/ChiefUpgrade_m7322_dvb.bin` was unpacked offline with an `mscompress7` LZMA extractor. Its reconstructed `APP`, `CONFIG`, `MSLIB`, and `customer` partitions are byte-identical to the previously recovered images (same SHA-256 for each). This confirms the downloaded package is the same firmware image already under analysis, not a newer QJY-enabled build.
 
 The image contains `sraf/bin/sraf_browser_bin` and `libqjyPost.so`, but no `qjyBrowser` executable. `CONFIG` sets `QJY_BROWSER_ENABLE=0`; the remaining qjyBrowser entries in `customer` are commented configuration examples. `SECURE_BOOTING_ENABLE=1`, `ENCRYPTED_NETWORK_UPGRADE_ENABLE=1`, and `OAD_UPGRADE_WITH_USB=0` are also present. The update script removes/recreates partitions, so it was not installed or modified.
+
+### RFS console/telnet configuration audit (2026-10-23)
+
+The official RFS image contains `etc/inittab` with `ttyS0::respawn:-/bin/sh`, so the stock system is configured for an interactive shell on the serial console. `CONFIG` also contains `BOOT_DISABLEUART=0`. This confirms a UART shell path in software, subject to board access and wiring.
+
+`etc/init.d/rcS` contains a commented template line, `#/bin/telnetd -l /bin/sh`, but no `telnetd` executable or symlink was found in RFS; only `usr/bin/telnet -> ../../bin/busybox` is present. The stock image therefore does not expose a network telnet service. No file or firmware modification was made.
