@@ -549,3 +549,5 @@ The official RFS image contains `etc/inittab` with `ttyS0::respawn:-/bin/sh`, so
 ### Telnet-enable update feasibility (2026-10-23)
 
 Uncommenting the `rcS` line would not be sufficient: the referenced `/bin/telnetd` is absent, and the BusyBox image has no `telnetd` applet marker. The RFS update is also followed by `store_secure_info ROOTFSSign`; with `SECURE_BOOTING_ENABLE=1`, changing one byte in the SquashFS invalidates the signed partition. A usable update would require the OEM signing key and matching vendor tooling, neither of which is present in the artifact. No modified or flashable update was generated.
+
+The signature records decode as `SECURITY` structures (`ROOTFSSign`, `kernelSign`, and `keySetSign`). The associated `keySet` payload is 0x524 bytes of `0xff`, not a usable private/public key bundle. No OEM private key is present in the firmware artifact.
