@@ -7,7 +7,8 @@
 <script>
 (function () {
   var out = document.getElementById('out');
-  function line(s) { out.textContent += '\n' + s; }
+  var report = [];
+  function line(s) { report.push(s); out.textContent += '\n' + s; }
   function check(name, fn) { try { line(name + ': ' + fn()); } catch (e) { line(name + ': exception ' + e.name + ': ' + e.message); } }
   out.textContent = 'SAFE JAVASCRIPT PROBE';
   line('location: ' + location.href);
@@ -29,5 +30,9 @@
   check('WebAssembly', function () { return typeof window.WebAssembly === 'object' || typeof window.WebAssembly === 'function' ? 'present' : 'absent'; });
   check('typed arrays', function () { return typeof Uint8Array === 'function' ? 'present' : 'absent'; });
   line('RESULT: feature/API probe only; no file, PDF, exploit, or persistent write attempted.');
+  try {
+    var beacon = new Image();
+    beacon.src = '/report?data=' + encodeURIComponent(report.join('\n'));
+  } catch (e) {}
 }());
 </script>
