@@ -331,3 +331,13 @@ The OTA framework is present as a dependency and uses a production HTTPS invento
 The shipped Stark app does fetch remote `index.js` over HTTPS and executes it with `eval()`. Its local bootstrap accepts `--js-args="--blastHost=..."`; `_passFlagsToJsEnvironment()` separately exposes `--deeplink`, `--dial-payload`, and `--js-args`.
 
 Static APM disassembly shows `RequestToRunWithParam` passing the caller string through `CheckParameterIsFromArgv` into `ExecuteProgram` (`FUN_0001a0ec`); `FUN_000180f0` appends it raw to the command sent to BigBang, which parses argv and calls `execve`. This creates a credible WebUI-to-Amazon-flag path (not a shell injection); a controlled attempt returned a reversible `OpenApp` response but produced no request to the local HTTP canary, so live exploitability remains unconfirmed.
+
+### Ignition JavaScript file bindings (2026-10-22)
+
+The `Amazon/bin/ignition` binary contains a `FileSystemExtension` binding named `getFileContentsAsString`. The binding accepts one JavaScript string, obtains the current compartment's extension, and calls `LinuxFileSystemFacade::openFile(path, mode=2)`, `getFileSize(path)`, and `FileHandle::read()`. The reviewed method has no visible `PluginPath` group check or canonicalisation before opening the supplied path. This is a potential arbitrary-file-read primitive for JavaScript running inside Ignition; it is not a shell or write primitive.
+
+`PluginJavaScriptBinder::setFileSystemExtension()` stores the extension at binder slot `this+0x54`; `bindNonStaticExtensions()` conditionally registers that slot and defines its JS function. Static inspection confirms the binding/registration path exists, but does not prove that a remotely supplied Stark script can reach it on this firmware.
+
+The related `network.http.data.createFileConsumer(path)` binding is more restricted. `HttpResponseConsumerFactory::createFileConsumer()` accepts a path only when `PluginPath::isPathFromGroup(path, 2)` or group `4` succeeds; otherwise it returns a null consumer. Stark's normal downloader first resolves a basename under `user://.../web-cache/`, so the observed HTTP fetch path is a cache write, not an arbitrary filesystem write.
+
+No JavaScript, file path, or file-read probe was sent to the TV. The prior controlled `--blastHost` attempts produced no local canary request, so the remote reachability of these bindings remains unverified.
