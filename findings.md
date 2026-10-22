@@ -238,6 +238,8 @@ A fresh passive SYN scan found the same service state: `3697`, `7681`, `56789`, 
 - A public MStar advisory documents command injection through malicious USB-upgrade filenames on some MStar set-top boxes: <https://github.com/Ivan-Markovic/Command-injections-via-USB-upgrade-in-MSTAR-Set-Top-box>. Our firmware contains a related MBOOT/update parser lead, but model-specific applicability is unconfirmed. Testing would require USB insertion and reboot and remains out of scope because of brick risk.
 - CHiQ's official service portal requires the device serial number and warns that firmware is intended for repair; no public U43H7L package matching this build was found: <https://aftersales.changhong.cz/de/firmwaresearch/>.
 
+The same portal was queried read-only with the reported serial `G21F01B9CZE0001462` on the German, English, French, Czech, and Belgian endpoints. All five returned “software not found for this serial number.” No public package matching `1.0.3.0.20210319160335_5.1.3_CHiQ_U43H7L_v.1.1.9` was located.
+
 The local official `ChiefUpgrade_m7322_dvb.bin` is an older `v.1.1.8` package for chip `m7322` (the TV reports `v.1.1.9`). Its 64-KiB plain-text MBOOT script contains `force_overwrite`/partition recreation commands for certificate, customer, MBOOT, rootfs, APP, and other partitions, followed by CRC and secure-signature records. It is useful for offline parser comparison only; modifying or installing it would be a full-flash operation, not a safe shell-enablement update.
 
 ### Safe browser feature probe (2026-10-22)
