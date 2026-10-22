@@ -385,3 +385,7 @@ The browser exposes `window.sraf` plus global SRAF wrappers and constants. `sraf
 `libsrafcustomjs.so` registers global constructors `mtvapiA` and `mtvapiB`. Their prototypes expose demo methods (`getIp`, `getPersonalInfo`, `setNetwork`, `changeWeight`, `flyTo`, `goHome`, etc.). Safe getter calls returned only demo values (`undefined`, `true,false,true`, and `My Ip 192.168.0.2`). The library imports no shell, file, socket, or process-execution APIs, so these objects are not an OS bridge.
 
 The common SRAF JavaScript buffer also contains a dormant `inject_ajax_code()` helper that would append an external HTTP jQuery script, but the extracted buffer contains only its definition; no call site was found. No external script was loaded.
+
+### SRAF custom-script loading audit (2026-10-22)
+
+`libsraf_core.so` resolves custom JavaScript by taking the resource directory, appending `/javascripts/<AppID>.dat`, and either AES-decrypting or reading that file. The shipped APP image contains only four encrypted `.dat` files (`FLINGO`, `Facebook`, `Picasa`, and `Twitter`). The only configuration exposing `EnableCustomPlainJs`/`CustomJsPath` is `NRGPortal.json`, where the feature is disabled (`0`) and the path is empty. No WebUI/DIAL write or download path to these APP resources was found; the image is mounted read-only during normal boot. This is therefore a static resource-loading feature, not a practical network-to-persistent-JS injection path.
