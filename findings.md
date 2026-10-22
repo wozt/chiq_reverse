@@ -295,3 +295,9 @@ Live read-only verification reached all getter methods normally. A direct `GetSy
 `SendEventToApp()` creates a fixed 0x108-byte APM record (event type `12`) and calls `APM_SendEventEx` for the configured default app. `OpenNativeUI()` supplies the fixed `open_from_webui: ` prefix and only falls back to `APM_RequestToRun`/`APM_PostEventEx` if that send fails. There is no shell formatter or executable path in this route.
 
 `vibra_lite` has generic Cobalt `OnApplicationEvent()`/`OnDeepLinkEvent()` code and only imports APM input APIs. It contains no `open_from_webui` string and no `system()`/`exec*` import. The shipped HomePortal JavaScript does not register an application/deep-link callback; the platform-side consumer of event type 12 is therefore not identified. No live native-UI event was sent because that would change TV state.
+
+### SRAF APM input bridge audit (2026-10-22)
+
+`libbrowser_client.so` uses a fixed input loop (`APM_WaitInputEvent` -> `APM_HasInputEvent` -> `APM_GetInputNonBlock`) with a 516-byte buffer. It accepts raw input categories `0`, `1`, `3`, `15`, and `17`; other categories are discarded. Accepted records are converted to `SrafInputEvent` key, pointer, or platform data. The converter has no string parsing, file operation, `system()`, or `exec*` call.
+
+This is the SRAF browser input path, not the HomePortal receiver for WebUI event type `12`. It rules out the shared browser input normalizer as a command sink, but does not identify the final event-12 consumer. No live event was sent.
