@@ -18,3 +18,7 @@ analysis/schematics/*.pdf
 
 # Private signing material and bundled binaries from the helper tool
 tools/
+
+# Large upstream source snapshot kept locally for offline comparison
+analysis/chromium-47.0.2526.106/
+analysis/chromium-47.0.2526.106.tar.gz

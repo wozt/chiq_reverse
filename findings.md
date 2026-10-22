@@ -252,6 +252,8 @@ The matching upstream Chromium source is public at the official Chromium mirror,
 
 Public U43H7L product pages confirm Prime Video support but do not publish an app build number: <https://device.report/chiq/u43h7l>. No public Prime/Amazon package matching this TV or its `v.1.1.9` firmware was found. The exact Prime version therefore requires either a matching firmware filesystem/package or a read-only version display exposed by the TV; current LAN APIs do not expose it.
 
+The exact upstream snapshot is stored locally at `analysis/chromium-47.0.2526.106/`; its compressed archive SHA-256 is `2e6e210860097d25a79015024636ab80a44b5d48abad4389cc6e1c1037133d1f`. The source audit is in `analysis/chromium47-source-audit.md`. The large source snapshot is intentionally excluded from Git; only the audit and hash are tracked.
+
 ### Safe browser feature probe (2026-10-22)
 
 `analysis/probes/chromium47-safe-probe.html` fingerprints the reported Chromium version, PDF MIME/plugin presence, selected JavaScript features, and iframe sandbox API. It performs no file reads, socket/WebSocket connections, PDF loads, malformed input, or persistent change.
