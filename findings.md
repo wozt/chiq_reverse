@@ -284,6 +284,8 @@ The ARM disassembly reconstructs the WebUI dispatcher as a fixed hash table. `Re
 
 `OpenNativeUI(command)` prepends the fixed event prefix `open_from_webui: ` and sends it through APM event/request APIs. The command length is calculated with `strlen()` and passed as an event size; no shell invocation is present in this function. The shipped UI configuration exposes only `open_miracast: default`, `open_media_player: main`, and `open_settings: default` native actions.
 
+The complete handler review found no WebUI import of `system`, `exec*`, or `popen`. `SendEventToApp()` clears a fixed 0x108-byte APM record, then stores the caller-controlled string pointer and `strlen()+1` in the record; no local length cap is visible. This is a possible APM receiver length/DoS audit lead, not a code-execution primitive. No oversized event was sent.
+
 The destination is the APM default application (`HomePortal`, configured as `/applications/webui/engine/vibra_lite`), not a Unix command interpreter. The event wrapper uses a fixed 0x108-byte stack structure and `APM_SendEventEx`; the only WebUI-side event parser found is for the unrelated `set_focus: ` notification. The HomePortal executable contains generic deep-link/event code but no literal `open_from_webui` handler or shell import; receiver behavior remains unconfirmed without sending a state-changing native-UI request.
 
 `GetAppNameFromUrl()` uses an exact URL-map lookup, not a prefix or wildcard match. The fixed `file:///index.html` owner registration therefore bypasses session ownership but does not provide arbitrary URL-to-app mapping.
