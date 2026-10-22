@@ -289,3 +289,9 @@ The destination is the APM default application (`HomePortal`, configured as `/ap
 A fresh live check confirmed the distinction: `file:///not-mapped.html` returned `res:1`, `file:///index.html` returned `res:0`, and `GetApiVersion` then returned `0.3` on the same connection.
 
 Live read-only verification reached all getter methods normally. A direct `GetSymbolAddress` request produced no response, while a fresh session continued to answer `GetApiVersion` and `GetNetworkInfo`; no remote loader or symbol lookup was observed. The remaining useful WebUI work is receiver-side parsing of the APM `open_from_webui:` event, which requires offline inspection only; no state-changing WebUI method was sent in this review.
+
+### WebUI event receiver audit (2026-10-22)
+
+`SendEventToApp()` creates a fixed 0x108-byte APM record (event type `12`) and calls `APM_SendEventEx` for the configured default app. `OpenNativeUI()` supplies the fixed `open_from_webui: ` prefix and only falls back to `APM_RequestToRun`/`APM_PostEventEx` if that send fails. There is no shell formatter or executable path in this route.
+
+`vibra_lite` has generic Cobalt `OnApplicationEvent()`/`OnDeepLinkEvent()` code and only imports APM input APIs. It contains no `open_from_webui` string and no `system()`/`exec*` import. The shipped HomePortal JavaScript does not register an application/deep-link callback; the platform-side consumer of event type 12 is therefore not identified. No live native-UI event was sent because that would change TV state.
