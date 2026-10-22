@@ -1,0 +1,33 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Chromium 47 JavaScript safe probe</title>
+<style>body{background:#102030;color:#e8f0f8;font:16px monospace;margin:2em}h1{color:#7fd}pre{white-space:pre-wrap}</style>
+<h1>SAFE JAVASCRIPT PROBE</h1>
+<pre id="out">starting...</pre>
+<script>
+(function () {
+  var out = document.getElementById('out');
+  function line(s) { out.textContent += '\n' + s; }
+  function check(name, fn) { try { line(name + ': ' + fn()); } catch (e) { line(name + ': exception ' + e.name + ': ' + e.message); } }
+  out.textContent = 'SAFE JAVASCRIPT PROBE';
+  line('location: ' + location.href);
+  line('origin: ' + (location.origin || '(origin property absent)'));
+  line('UA: ' + navigator.userAgent);
+  check('strict mode', function () { return (function () { 'use strict'; return this === undefined; }()) ? 'works' : 'unexpected'; });
+  check('eval', function () { return eval('1 + 2') === 3 ? 'works' : 'unexpected'; });
+  check('Function constructor', function () { return Function('return 4')() === 4 ? 'works' : 'unexpected'; });
+  check('JSON', function () { return JSON.parse('{"ok":true}').ok ? 'works' : 'unexpected'; });
+  check('URL object', function () { return typeof URL === 'function' ? 'present' : 'absent'; });
+  check('localStorage read', function () { return typeof localStorage === 'object' ? 'present' : 'absent'; });
+  check('sessionStorage read', function () { return typeof sessionStorage === 'object' ? 'present' : 'absent'; });
+  check('iframe sandbox', function () { var f = document.createElement('iframe'); return 'sandbox' in f ? 'present' : 'absent'; });
+  check('iframe postMessage', function () { return typeof window.postMessage === 'function' ? 'present' : 'absent'; });
+  check('WebSocket constructor', function () { return typeof window.WebSocket === 'function' ? 'present' : 'absent'; });
+  check('fetch', function () { return typeof window.fetch === 'function' ? 'present' : 'absent'; });
+  check('Promise', function () { return typeof window.Promise === 'function' ? 'present' : 'absent'; });
+  check('Proxy', function () { return typeof window.Proxy === 'function' ? 'present' : 'absent'; });
+  check('WebAssembly', function () { return typeof window.WebAssembly === 'object' || typeof window.WebAssembly === 'function' ? 'present' : 'absent'; });
+  check('typed arrays', function () { return typeof Uint8Array === 'function' ? 'present' : 'absent'; });
+  line('RESULT: feature/API probe only; no file, PDF, exploit, or persistent write attempted.');
+}());
+</script>
