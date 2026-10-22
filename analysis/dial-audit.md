@@ -15,6 +15,7 @@ The local `execv()` helper has no direct call from the visible main path; it is 
 The request-handling library was extracted from the recovered `MSLIB.img` as
 `analysis/dial-libs/libdialapm.so` (ARM ELF, 53,060 bytes). This is the library
 that implements the HTTP/DIAL paths behind the small `dialserver` launcher.
+SHA-256: `b518694e70205f03f63188f0de5a43ff19853111060dba957f0a71339a19113c`.
 
 The library imports socket/HTTP, `dlopen`, and file I/O functions, but no
 `system()`, `exec*()`, `popen()`, or `fork()`. Its exported launch path calls
