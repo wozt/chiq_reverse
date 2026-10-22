@@ -523,3 +523,13 @@ configuration sets `auto_register_app=0`, with `/tmp/dial_data` only in that
 disabled HbbTV block. This explains the live `403` results and leaves the
 `libdialapm.so` parser bug as an offline candidate rather than a reachable
 LAN exploit. No Binder call was attempted.
+
+### NetRange/QJY public-surface review (2026-10-23)
+
+Public searches found no NetRange, `QJY NETRANGE`, `qjyBrowser`, or `NETRANGEMMH` CVE/advisory. Public material describes NetRange as a cloud/white-label portal delivered through a TV browser, while Seraphic documents NetRange Portal running on Sraf HTML5 Browser; this points to the browser/SRAF/HbbTV stack as the local attack surface, not a standalone NetRange daemon ([NetRange/ACCESS](https://netrange.com/access-and-netrange-set-new-standards-interacive-entertainment-smart-tvs-launch-integrated-hbbtv), [Seraphic TV Portal datasheet](https://www.seraphic-corp.com/Download.aspx?filer=%2FUpload%2FFile%2F&url=2018-06-29%2F201806291408123092.pdf%7CSERAPHIC_TVPortal_datasheet.pdf)).
+
+The firmware's opaque NetRange hostname resolves to `lb.netrange.com`; plain HTTP returns `403`, while HTTPS requests without a client certificate are rejected. No probing beyond DNS and one header request was performed. No NetRange-specific entry point was identified.
+
+The recovered `MSLIB.img` also contains [`analysis/qjy-post-audit.md`](analysis/qjy-post-audit.md). `libqjyPost.so` is a telemetry uploader for `app.dcc.ninja`, not the NetRange portal and not a shell bridge. The QJY browser executable itself is missing from the recovered partition set, so its argument parser and native bridge remain the main unresolved QJY-specific items.
+
+The same audit found a conditional QJY telemetry crash candidate: its libcurl write callback treats the response buffer as a NUL-terminated C string and calls `%s`, `strcmp()`, and `atoi()` without using the callback length. A non-NUL-terminated response could trigger an out-of-bounds read, but the endpoint is hard-coded, TLS verification is normally enabled, and no response manipulation or live crash test was attempted.
