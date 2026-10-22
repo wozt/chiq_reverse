@@ -246,6 +246,12 @@ Internet Archive metadata searches for `U43H7L`, `HLS90FJ`, `CHIQ_U43H7L`, `JUC7
 
 The local official `ChiefUpgrade_m7322_dvb.bin` is an older `v.1.1.8` package for chip `m7322` (the TV reports `v.1.1.9`). Its 64-KiB plain-text MBOOT script contains `force_overwrite`/partition recreation commands for certificate, customer, MBOOT, rootfs, APP, and other partitions, followed by CRC and secure-signature records. It is useful for offline parser comparison only; modifying or installing it would be a full-flash operation, not a safe shell-enablement update.
 
+### Browser source and Prime version search (2026-10-22)
+
+The matching upstream Chromium source is public at the official Chromium mirror, including tag `47.0.2526.106`: <https://github.com/chromium/chromium>, <https://chromium.googlesource.com/chromium/src/%2B/47.0.2526.106/>. This is upstream Chromium only; the TV runs a vendor SRAF/CHiQ fork, and no public source tree or patch set for that fork was found.
+
+Public U43H7L product pages confirm Prime Video support but do not publish an app build number: <https://device.report/chiq/u43h7l>. No public Prime/Amazon package matching this TV or its `v.1.1.9` firmware was found. The exact Prime version therefore requires either a matching firmware filesystem/package or a read-only version display exposed by the TV; current LAN APIs do not expose it.
+
 ### Safe browser feature probe (2026-10-22)
 
 `analysis/probes/chromium47-safe-probe.html` fingerprints the reported Chromium version, PDF MIME/plugin presence, selected JavaScript features, and iframe sandbox API. It performs no file reads, socket/WebSocket connections, PDF loads, malformed input, or persistent change.
