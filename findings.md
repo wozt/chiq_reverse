@@ -533,3 +533,9 @@ The firmware's opaque NetRange hostname resolves to `lb.netrange.com`; plain HTT
 The recovered `MSLIB.img` also contains [`analysis/qjy-post-audit.md`](analysis/qjy-post-audit.md). `libqjyPost.so` is a telemetry uploader for `app.dcc.ninja`, not the NetRange portal and not a shell bridge. The QJY browser executable itself is missing from the recovered partition set, so its argument parser and native bridge remain the main unresolved QJY-specific items.
 
 The same audit found a conditional QJY telemetry crash candidate: its libcurl write callback treats the response buffer as a NUL-terminated C string and calls `%s`, `strcmp()`, and `atoi()` without using the callback length. A non-NUL-terminated response could trigger an out-of-bounds read, but the endpoint is hard-coded, TLS verification is normally enabled, and no response manipulation or live crash test was attempted.
+
+### Official U43H7L firmware cross-check (2026-10-23)
+
+The existing artifact `artifacts/official/ChiefUpgrade_m7322_dvb.bin` was unpacked offline with an `mscompress7` LZMA extractor. Its reconstructed `APP`, `CONFIG`, `MSLIB`, and `customer` partitions are byte-identical to the previously recovered images (same SHA-256 for each). This confirms the downloaded package is the same firmware image already under analysis, not a newer QJY-enabled build.
+
+The image contains `sraf/bin/sraf_browser_bin` and `libqjyPost.so`, but no `qjyBrowser` executable. `CONFIG` sets `QJY_BROWSER_ENABLE=0`; the remaining qjyBrowser entries in `customer` are commented configuration examples. `SECURE_BOOTING_ENABLE=1`, `ENCRYPTED_NETWORK_UPGRADE_ENABLE=1`, and `OAD_UPGRADE_WITH_USB=0` are also present. The update script removes/recreates partitions, so it was not installed or modified.
