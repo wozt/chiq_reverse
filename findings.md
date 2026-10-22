@@ -391,3 +391,7 @@ The TV loaded the updated probe and reported: Web MIDI present; PDF MIME handler
 ### WebUI dynamic-loader call-graph check (2026-10-22)
 
 The only call to `MstarSharedObjectManager::GetSymbolAddress()` in `WebUIService-0.3` is `TVClient::IsWanAvailable(bool&)`. Its arguments are compiled constants: `libnetworkmanager.so` and `_ZN14NetworkManager12GetWanStatusEv`; the returned pointer is stored at `TVClient+0xe0` and called only for WAN-status reporting. No JSON field, WebSocket string, or command-table entry reaches this loader. The generic `LoadSharedObject`/`GetSymbolAddress` helpers therefore remain internal implementation code, and the LAN WebUI still has no confirmed path to arbitrary `dlopen`/`dlsym`, TvManager shell execution, or flash operations.
+
+### APM `system()` call-site review (2026-10-22)
+
+`appmgr` imports `system()`, but its eight call sites are lifecycle/storage helpers. The embedded command templates are `cp -f %s %s`, `sync`, `mkdir -p`, `mount -o loop`, and `umount`; the surrounding code supplies paths from internal app/config and tmpfs handling. The app configuration's `kill_list_*` values are resolved as registered application names and used for lifecycle control, not concatenated into these shell strings. No `APM_SendEventEx`/WebUI event-data path to `system()` was found in the reviewed call sites. This removes another apparent APM-to-shell shortcut; the remaining event-12 receiver is still unidentified offline.
