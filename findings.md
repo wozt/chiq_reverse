@@ -366,6 +366,8 @@ The user then opened Amazon from the TV UI and confirmed that its interface was 
 
 A subsequent normal WebUI relaunch (`OpenApp("AMAZON", null)`) returned `res:0`; the DIAL status immediately reported `running`. No deep-link, payload, or stop request was used in this relaunch.
 
+While Amazon remained in the foreground, a read-only network check found only TCP `3697`, `56789`, and `56790` open; HbbTV TCP `7681` was closed. DIAL `GET /apps/AmazonInstantVideo/run` returned `501`, `/dial_data` returned `403`, and no additional Amazon network route appeared.
+
 ### Ignition argument parser cross-check (2026-10-22)
 
 The shipped `utils/commandLine.js` documents the exact syntax `--js-args="--myString=foo"`; `parseArgs()` exposes the inner key through `commandLine.args`. Native `ApplicationJsCompartment::_passFlagsToJsEnvironment()` recognizes `js-args`, `dial-payload`, and `deeplink`, while `setDialPayload()` only stores `commandLine.dialPayload`. The DIAL configuration uses `payload_prefix=--dialpayload` (without the hyphen used by Ignition's registered `--dial-payload` option). A reversible WebUI launch using both quoted and unquoted `--js-args=--blastHost=...` returned `res:0` and started Amazon, but a local canary still received no `/index.js`; the argument-to-Stark path remains unconfirmed.
