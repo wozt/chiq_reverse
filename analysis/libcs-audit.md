@@ -23,3 +23,22 @@ This matches the live result: valid POST requests to both HbbTV and Amazon
 therefore remains an offline candidate, not a currently reachable TV path.
 
 No Binder transaction or malformed DIAL request was sent to the TV.
+
+## SRAF/CSM bridge review
+
+`libsraf_hbbtv_adaptor.so` depends on the HbbTV WebSocket, IPC, and platform
+libraries, but not on `libcs.so`; it has no `dlopen`/`dlsym` import and contains
+no `system()`, `exec*()`, `popen()`, or `fork()` import. Its CSM exports
+(`Sraf_CSM_LaunchCSApp`, `Sraf_CSM_SetAppLaunchURL`, and discovery helpers)
+operate through internal callbacks and IPC.
+
+The adaptor contains SSDP/DIAL discovery constants (`239.255.255.250:1900`,
+`M-SEARCH`, `urn:dial-multiscreen-org:service:dial:1`) and UDP
+`sendto`/`recvfrom` calls. This is discovery traffic, not a TCP listener or a
+network-to-Binder bridge. The WebSocket library has no direct call to the CSM
+exports, and no registration path from TCP/7681 to `CSS_DIAL_SERVICE` was
+identified.
+
+**Conclusion:** the disabled HbbTV DIAL library remains a local Binder
+component. The recovered SRAF/CSM code does not provide a LAN path to activate
+it or to obtain shell/file-write access.

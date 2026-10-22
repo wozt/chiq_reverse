@@ -234,6 +234,8 @@ The only observed `SetAppLaunchURL` caller is an internal JSON/IPC handler in th
 
 The current live check found `3697`, `7681`, `56789`, and `56790` open; `22`, `23`, `7682`, and `9222` closed. Read-only requests to thirteen common paths on `56790` all returned the identical 30-byte `404 Not Found` response. No secondary HTTP, upload, debug, or shell route was identified.
 
+The adaptor also contains SSDP/DIAL discovery constants and UDP `sendto`/`recvfrom` calls, but no TCP listener, dynamic loading of `libcs.so`, or network-to-Binder bridge. This discovery code does not change the conclusion: HbbTV DIAL remains local Binder-only on this firmware.
+
 ### Chromium/SRAF native boundary review (2026-10-22)
 
 `/Customer/app.cfg` launches the browser as:
