@@ -425,6 +425,20 @@ The common SRAF JavaScript buffer also contains a dormant `inject_ajax_code()` h
 
 `libsraf_core.so` resolves custom JavaScript by taking the resource directory, appending `/javascripts/<AppID>.dat`, and either AES-decrypting or reading that file. The shipped APP image contains only four encrypted `.dat` files (`FLINGO`, `Facebook`, `Picasa`, and `Twitter`). The only configuration exposing `EnableCustomPlainJs`/`CustomJsPath` is `NRGPortal.json`, where the feature is disabled (`0`) and the path is empty. No WebUI/DIAL write or download path to these APP resources was found; the image is mounted read-only during normal boot. This is therefore a static resource-loading feature, not a practical network-to-persistent-JS injection path.
 
+An extended APP-image audit recovered `libsraf_core.so`, `libsrafcustomjs.so`,
+`libadaptor_ipc.so`, and the HbbTV APM client/server libraries. Decompilation
+of `sraf_js_get_app_user_js()` confirms that the plain-file branch is gated by
+`EnableCustomPlainJs == 1`, then reads only the configured `CustomJsPath` as
+the browser user. The shipped configuration keeps that branch disabled.
+
+The HbbTV APM client/server IPC uses local Unix-domain sockets
+(`/domain_data/sraf_apm_named_domain_socket` and
+`/OAD/data/seraphic_browser/sraf_named_domain_socket`). The server imports
+`dlopen`/`dlsym` and `popen`, but no TCP listener or network-controlled loader
+argument was identified; its `detect_process` helper is an internal process
+presence check. `libsrafcustomjs.so` itself has no file, socket, shell, or
+process-execution imports. These components do not add a LAN-to-shell path.
+
 ### SRAF IPC dispatcher audit (2026-10-22)
 
 The stripped browser binary still exposes `sraf::MsgHandleContext::HandleSyncIPCOnUI` and `HandleAsyncIPCOnUI`. The asynchronous dispatcher reads an integer selector, accepts only seven consecutive values (`1001`–`1007`), and routes them to fixed UI virtual methods; the synchronous path handles the same small selector set and serializes the result through the SRAF IPC client. The inspected handlers consume bounded JSON integer fields and call browser/UI objects. No `system`, `exec*`, `popen`, `dlopen`, or `dlsym` import is present in `sraf_browser_bin`, and no file/process primitive is reached from these dispatchers. This confirms that `sraf_ext.send/sendSync` is an IPC-backed browser/UI command bridge, not an exposed shell or library-loader interface.
