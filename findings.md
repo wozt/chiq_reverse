@@ -236,6 +236,8 @@ The current live check found `3697`, `7681`, `56789`, and `56790` open; `22`, `2
 
 The adaptor also contains SSDP/DIAL discovery constants and UDP `sendto`/`recvfrom` calls, but no TCP listener, dynamic loading of `libcs.so`, or network-to-Binder bridge. This discovery code does not change the conclusion: HbbTV DIAL remains local Binder-only on this firmware.
 
+The current read-only `GET /apps/HbbTV` still reports `stopped`; its advertised remote App2App URL accepts a WebSocket handshake, while the advertised CSS-CII and CSS-TS URLs returned `403`. No application frame or control operation was sent.
+
 ### Chromium/SRAF native boundary review (2026-10-22)
 
 `/Customer/app.cfg` launches the browser as:

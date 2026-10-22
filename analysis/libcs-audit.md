@@ -42,3 +42,10 @@ identified.
 **Conclusion:** the disabled HbbTV DIAL library remains a local Binder
 component. The recovered SRAF/CSM code does not provide a LAN path to activate
 it or to obtain shell/file-write access.
+
+## Read-only live check
+
+`GET /apps/HbbTV` still returns `state=stopped` and advertises a remote App2App
+URL plus CSS-CII/TS URLs. The advertised remote App2App URL accepts a WebSocket
+upgrade; the advertised CSS-CII and CSS-TS URLs returned `403 Forbidden` during
+a handshake-only check. No application frame or control operation was sent.
