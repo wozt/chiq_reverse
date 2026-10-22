@@ -319,3 +319,5 @@ The only MstarLauncher remote-inspector option is commented out in `app.cfg`; no
 ### Amazon Lua command sinks (2026-10-22)
 
 Static decompilation identifies the `system()` wrapper at `0x00963828` as a Lua `os.execute`-style handler: it obtains argument 1 as a string, passes it directly to `system()`, and returns the status. The `popen()` wrapper at `0x0096294c` matches Lua `io.popen`, including the command string and optional mode. These are real local command sinks inside `ignition`, but no WebUI/JavaScript binding, deep-link conversion, or remote inspector route to the Lua state was established. Treat this as an offline candidate only; no Amazon launch was attempted.
+
+`JSScriptHost::_executeScript()` and `LuaScriptHost::_executeScript()` both resolve a plugin-relative path through `PluginPath::getPath()` before execution; the former invokes the JavaScript engine and the latter calls `LuaState::doFile()`. The JS/Lua bridge found in `JsObjectToLuaTableConverter` converts values but does not execute Lua source. This makes the `os.execute`/`io.popen` sinks local plugin-script capabilities, not a demonstrated remote-WebUI primitive.
