@@ -341,3 +341,7 @@ The `Amazon/bin/ignition` binary contains a `fileSystem` namespace with a `getFi
 The related `network.http.data.createFileConsumer(path)` binding is more restricted. The binary's `PluginFileGroup` table maps group `2` to `USER_VAR` and group `4` to `TEST_DATA`; `HttpResponseConsumerFactory::createFileConsumer()` accepts only those groups and otherwise returns a null consumer. Stark's normal downloader first resolves a basename under `user://.../web-cache/`, so the observed HTTP fetch path is a cache write, not an arbitrary filesystem write.
 
 No JavaScript, file path, or file-read probe was sent to the TV. The prior controlled `--blastHost` attempts produced no local canary request, so the remote reachability of these bindings remains unverified.
+
+### Potential OS-information reads (offline only)
+
+The shipped `/etc/passwd` assigns `AMAZON` and `RESET_AMAZON` UID/GID `10045`. Boot code creates `/Customer/AMAZON`, mounts it separately, and applies mode `0700` plus owner `10045:10045`. If the `fileSystem` binding were reachable from a running Amazon script, likely readable targets would include `/proc/self/status`, `/proc/self/cmdline`, `/proc/self/mounts`, `/etc/passwd`, and Amazon-owned `/Customer/AMAZON/*`. Access to root-only files, other app-private directories, or kernel-sensitive paths would still depend on normal Linux permissions and procfs policy. This remains a static capability assessment; no path was requested from the TV.
