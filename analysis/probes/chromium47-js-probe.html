@@ -42,6 +42,27 @@
   check('Proxy', function () { return typeof window.Proxy === 'function' ? 'present' : 'absent'; });
   check('WebAssembly', function () { return typeof window.WebAssembly === 'object' || typeof window.WebAssembly === 'function' ? 'present' : 'absent'; });
   check('typed arrays', function () { return typeof Uint8Array === 'function' ? 'present' : 'absent'; });
+  check('Web MIDI API (presence only)', function () { return typeof navigator.requestMIDIAccess === 'function' ? 'present' : 'absent'; });
+  check('PDF MIME handler', function () {
+    try { return navigator.mimeTypes && navigator.mimeTypes['application/pdf'] ? 'present' : 'absent'; } catch (e) { return 'blocked:' + e.name; }
+  });
+  check('IndexedDB', function () { return typeof window.indexedDB === 'object' || typeof window.indexedDB === 'function' ? 'present' : 'absent'; });
+  check('Web Workers', function () { return typeof window.Worker === 'function' ? 'present' : 'absent'; });
+  check('MediaSource', function () { return typeof window.MediaSource === 'function' ? 'present' : 'absent'; });
+  check('Web Audio', function () { return typeof window.AudioContext === 'function' || typeof window.webkitAudioContext === 'function' ? 'present' : 'absent'; });
+  check('WebRTC', function () { return typeof window.RTCPeerConnection === 'function' || typeof window.webkitRTCPeerConnection === 'function' ? 'present' : 'absent'; });
+  check('WebCrypto', function () { return window.crypto && typeof window.crypto.getRandomValues === 'function' ? 'present' : 'absent'; });
+  check('Service Worker', function () { return navigator.serviceWorker ? 'present' : 'absent'; });
+  check('SharedArrayBuffer', function () { return typeof window.SharedArrayBuffer === 'function' ? 'present' : 'absent'; });
+  check('Atomics', function () { return typeof window.Atomics === 'object' ? 'present' : 'absent'; });
+  check('canvas 2D', function () { var c = document.createElement('canvas'); return c.getContext && c.getContext('2d') ? 'present' : 'absent'; });
+  check('WebGL context', function () {
+    var c = document.createElement('canvas'), gl = null;
+    try { gl = c.getContext('webgl') || c.getContext('experimental-webgl'); } catch (e) { return 'exception:' + e.name; }
+    return gl ? 'present' : 'absent';
+  });
+  check('top/frame relationship', function () { return window.top === window ? 'top-level' : 'embedded'; });
+  check('document origin', function () { return location.origin || '(origin property absent)'; });
 
   line('--- integration surface ---');
   var names = ['webkit', 'chrome', 'external', 'sraf', 'SRAF', 'WebUI', 'webui', 'mstar', 'MStar', 'mtvapiA', 'mtvapiB', 'tv', 'TV', 'dial', 'DIAL', 'native', 'bridge', 'Android', 'cefQuery'];
@@ -174,6 +195,28 @@
     }
     return outGroups.join(' | ');
   });
+  check('sraf_ext command constants', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value || !d.value.commandType) return 'unavailable';
+    var obj = d.value.commandType, keys = Object.getOwnPropertyNames(obj), out = [];
+    for (var i = 0; i < keys.length && i < 120; i++) {
+      try { out.push(keys[i] + '=' + String(obj[keys[i]]).slice(0, 80)); } catch (e) { out.push(keys[i] + '=blocked'); }
+    }
+    return out.length ? out.join(', ') : 'empty';
+  });
+  check('native-looking function inventory', function () {
+    var names = Object.getOwnPropertyNames(window), out = [];
+    for (var i = 0; i < names.length && out.length < 80; i++) {
+      var n = names[i];
+      if (!/(sraf|mstar|mtv|webui|dial|native|shell|system|command|exec|load)/i.test(n)) continue;
+      try {
+        var d = Object.getOwnPropertyDescriptor(window, n), v = d && d.value;
+        if (typeof v === 'function') out.push(n + '=' + Function.prototype.toString.call(v).replace(/[\r\n]+/g, ' ').slice(0, 160));
+        else out.push(n + '=' + (d && d.get ? 'getter' : typeof v));
+      } catch (e) { out.push(n + '=blocked'); }
+    }
+    return out.length ? out.join(' | ') : 'none';
+  });
   check('SRAF wrapper source', function () {
     var wanted = ['sraf_browser_create_elements', 'sraf_load_url_from_link', 'sraf_browser_get_oipf_config_object', 'sraf_openinet_user_js_listener', 'sraf_common_user_js_listener'];
     var r = [];
@@ -222,7 +265,7 @@
   }
   wsProbe('WebUI 3697', 'ws://192.168.2.211:3697');
   wsProbe('HbbTV 7681', 'ws://192.168.2.211:7681');
-  line('RESULT: advanced surface inventory only; no file, PDF, exploit, command, or persistent write attempted.');
+  line('RESULT: deep surface inventory only; no file, PDF, MIDI request, exploit, command, navigation, or persistent write attempted.');
   setTimeout(sendReport, 2200);
 }());
 </script>
