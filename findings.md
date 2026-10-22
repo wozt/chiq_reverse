@@ -18,6 +18,19 @@
 
 No SSH, Telnet, or ADB listener was found.
 
+## Finding 2 — Empty root password in the recovered root filesystem
+
+**Severity:** High if a login service or local console is reachable
+**Status:** Confirmed in the extracted `v1.1.8` recovery image; not verified against the installed `v1.1.9` image
+
+`analysis/rootfs/etc/passwd` contains:
+
+```text
+root::0:0:root:/root:/bin/bash
+```
+
+No `/etc/shadow` file was present in the extracted root filesystem. The image also contains a root shell on `ttyS0` through `/etc/inittab` and a commented `/bin/telnetd -l /bin/sh` startup line. The live TV currently exposes neither TCP/22 nor TCP/23, so this is not a demonstrated LAN login path. It is nevertheless a concrete credential/configuration weakness and would turn any future telnet/serial/console exposure into unauthenticated root access.
+
 TCP/7681 is the HbbTV App2App/Companion Screen service; it is not evidence of a Miracast video-mirroring endpoint. No separate Miracast-specific listener was identified in the tested surface.
 
 ## Finding 1 — Unauthenticated LAN access to MStar WebUI API
@@ -415,6 +428,8 @@ The only call to `MstarSharedObjectManager::GetSymbolAddress()` in `WebUIService
 HomePortal maps the `media` input to the native event `open_media_player: main`. `OpenNativeUI()` wraps it as `open_from_webui: ...` and sends it through APM; the reviewed path has no `system()`, `exec*()`, or shell expansion. USB automount mounts `/dev/sd*` under `/usb/sd*` for `vfat`/`ntfs` and does not execute mounted files.
 
 The MSLIB image contains the native media stack (`libvdplayer`, `libmdmpplayer`, `libOMX.MStar`, subtitle and USB mass-storage Binder services). `libvdplayer` exposes demux/parser markers for MP4, ASF, RM, FLV, SWF, OGM, MKV, AVI, TS, MPG, DSS, JPEG/MPO, and subtitles; `media_codecs.xml` advertises MStar AVC/HEVC/MPEG-2/VP8/VP9/VC-1/MJPEG/AVS/AVS2/RealVideo and many audio decoders. The reviewed player library imports file I/O and decoder APIs but no shell execution primitive.
+
+The selected ARM media libraries have no `__stack_chk_fail` reference and no `GNU_RELRO` segment; their `GNU_STACK` is non-executable (`RW`). This is a confirmed hardening weakness in the recovered `v1.1.8` image, not a proven parser overflow or jailbreak. It would make a separately confirmed memory-corruption bug easier to exploit.
 
 This is a credible local native-parser crash/RCE surface, not a demonstrated shell path. A parser compromise would still require a media-process escape and a privilege boundary crossing. No malformed media was created or sent. Detailed evidence is in `analysis/media-player-audit.md`.
 

@@ -10,6 +10,7 @@ Date: 2026-10-22
 - The MSLIB image contains the native media stack: `libvdplayer.so`, `libmdmpplayer.so`, `libOMX.MStar.so`, `libsubtitlemanager.so`, `libusbmassstoragemanager.so`, and related Binder services.
 - `libvdplayer.so` contains demux/parse paths and format markers for MP4, ASF, RM, FLV, SWF, OGM, MKV, AVI, TS, MPG, DSS, JPEG/MPO, and subtitles. `media_codecs.xml` advertises MStar AVC, HEVC, MPEG-2, VP8/VP9, VC-1, MJPEG, AVS/AVS2, RealVideo, and numerous audio decoders.
 - The extracted media libraries import file I/O and MStar decoder APIs. The reviewed `libvdplayer.so` imports no `system`, `exec*`, `popen`, or `dlopen`; `libOMX.MStar.so` imports `dlopen`, but its visible use is codec/component loading.
+- The selected ARM media shared libraries have no `__stack_chk_fail` reference and no `GNU_RELRO` segment; their `GNU_STACK` is non-executable (`RW`). This is a confirmed hardening weakness in the recovered `v1.1.8` image, not by itself a memory-corruption bug or a working jailbreak. It would make a separately proven parser overflow easier to exploit.
 
 ## Assessment
 
