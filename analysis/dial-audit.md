@@ -34,6 +34,22 @@ app-control routes. That is a real access-control weakness on the LAN, but it
 currently provides reversible app launch/stop rather than root shell access or
 persistent modification. No malformed request was sent to the TV.
 
+## Candidate heap-overflow in `dial_data` parser (offline only)
+
+The POST `/apps/<app>/dial_data` path reaches `parse_params()`. The recovered
+ARM code allocates both destination buffers with `malloc(strlen(token))`, then
+calls the unbounded format `sscanf(token, "%[^=]=%s", key, value)` (format at
+`.rodata+0x14f8`). A token without `=` makes `%[^=]` copy the complete token
+and its terminating NUL into a buffer one byte too small. A local ASan harness
+reproducing this exact pattern reports a heap-buffer-overflow; see
+`analysis/dial-parse-harness.c`.
+
+This is a confirmed memory-safety defect in the recovered library's parser
+logic, but its exploitability on the TV is unverified: the route's app lookup,
+method/origin checks, allocator layout, and downstream use still need to be
+established. No malformed body was sent to the TV, and no crash test is
+authorized.
+
 ## Security boundary
 
 DIAL remains a useful app-control surface, but the recovered evidence does not show a network-to-root shell or persistent-write primitive. No payload was used to alter executable paths or launch unknown binaries.

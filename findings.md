@@ -478,3 +478,15 @@ established. The Netflix payload path is `/dev/shm/dial_argv` (volatile).
 Unauthenticated LAN app-control and permissive CORS/Origin handling remain
 security weaknesses, but current evidence supports reversible app launch/stop,
 not a root shell. No malformed request was sent to the TV.
+
+### DIAL `dial_data` parser candidate (offline only)
+
+The POST `/apps/<app>/dial_data` path reaches `parse_params()`, which allocates
+`strlen(token)` bytes and then uses unbounded `sscanf("%[^=]=%s", ...)`. A
+token without `=` causes the first conversion to copy its terminating NUL one
+byte past the allocation. An ASan harness reproducing the recovered code
+confirms the heap-buffer-overflow locally ([harness](analysis/dial-parse-harness.c)).
+
+This is a confirmed static memory-safety defect in the recovered DIAL library,
+not yet a confirmed TV crash or RCE. Route reachability, allocator layout, and
+post-parse use remain unverified. No malformed body was sent to the TV.
