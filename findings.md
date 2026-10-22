@@ -349,3 +349,7 @@ The shipped `/etc/passwd` assigns `AMAZON` and `RESET_AMAZON` UID/GID `10045`. B
 ### Stark remote-index execution boundary (2026-10-22)
 
 The Stark bootstrap fetches `/index.js`, then executes the response with `eval(indexJsContents)` before calling `BlastIgnition.getBlastConfig()`. It takes the returned `files` array and, when the first entry has `location === 'local'`, immediately calls `launchBlast()`. JavaScript resources are then executed with `include(resource.filepath, true)`; Lua resources are passed to the stylesheet loader. Otherwise the listed resources are downloaded into `user://.../web-cache/` and then included. This means a reachable, attacker-controlled `index.js` would already be arbitrary Ignition-JavaScript execution; the `fileSystem` binding is an additional read primitive, not the first execution step. The exact validation performed by `BlastIgnition.getBlastConfig()` is not present in the extracted Stark scripts, and the `blastHost` route was not live-confirmed.
+
+### Safe `/proc` read probe attempt (2026-10-22)
+
+A temporary local server served an `index.js` that would read only `/proc/self/status` and report the `Uid:` line through a second local request. The WebUI session registered successfully and one `OpenApp(AMAZON, --js-args=--blastHost=...)` call returned `res:0`, but the TV made no request for `/index.js` or `/report`. Later Amazon launches returned `res:4` and `GetAppList` continued to show only `Sraf OpenBrowser`. Therefore no script executed and no OS file was read; the temporary server and probe were removed.
