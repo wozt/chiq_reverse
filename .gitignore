@@ -11,6 +11,7 @@ analysis/appfs/
 analysis/rootfs/
 analysis/configfs/
 analysis/customerfs/
+analysis/media-libs/
 artifacts/
 
 # Local schematics/exports not intended for redistribution

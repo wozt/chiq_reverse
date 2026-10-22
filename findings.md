@@ -409,3 +409,11 @@ The only call to `MstarSharedObjectManager::GetSymbolAddress()` in `WebUIService
 ### APM `system()` call-site review (2026-10-22)
 
 `appmgr` imports `system()`, but its eight call sites are lifecycle/storage helpers. The embedded command templates are `cp -f %s %s`, `sync`, `mkdir -p`, `mount -o loop`, and `umount`; the surrounding code supplies paths from internal app/config and tmpfs handling. The app configuration's `kill_list_*` values are resolved as registered application names and used for lifecycle control, not concatenated into these shell strings. No `APM_SendEventEx`/WebUI event-data path to `system()` was found in the reviewed call sites. This removes another apparent APM-to-shell shortcut; the remaining event-12 receiver is still unidentified offline.
+
+### USB/media-player surface audit (2026-10-22)
+
+HomePortal maps the `media` input to the native event `open_media_player: main`. `OpenNativeUI()` wraps it as `open_from_webui: ...` and sends it through APM; the reviewed path has no `system()`, `exec*()`, or shell expansion. USB automount mounts `/dev/sd*` under `/usb/sd*` for `vfat`/`ntfs` and does not execute mounted files.
+
+The MSLIB image contains the native media stack (`libvdplayer`, `libmdmpplayer`, `libOMX.MStar`, subtitle and USB mass-storage Binder services). `libvdplayer` exposes demux/parser markers for MP4, ASF, RM, FLV, SWF, OGM, MKV, AVI, TS, MPG, DSS, JPEG/MPO, and subtitles; `media_codecs.xml` advertises MStar AVC/HEVC/MPEG-2/VP8/VP9/VC-1/MJPEG/AVS/AVS2/RealVideo and many audio decoders. The reviewed player library imports file I/O and decoder APIs but no shell execution primitive.
+
+This is a credible local native-parser crash/RCE surface, not a demonstrated shell path. A parser compromise would still require a media-process escape and a privilege boundary crossing. No malformed media was created or sent. Detailed evidence is in `analysis/media-player-audit.md`.
