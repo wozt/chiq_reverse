@@ -44,7 +44,7 @@
   check('typed arrays', function () { return typeof Uint8Array === 'function' ? 'present' : 'absent'; });
 
   line('--- integration surface ---');
-  var names = ['webkit', 'chrome', 'external', 'sraf', 'SRAF', 'WebUI', 'webui', 'mstar', 'MStar', 'tv', 'TV', 'dial', 'DIAL', 'native', 'bridge', 'Android', 'cefQuery'];
+  var names = ['webkit', 'chrome', 'external', 'sraf', 'SRAF', 'WebUI', 'webui', 'mstar', 'MStar', 'mtvapiA', 'mtvapiB', 'tv', 'TV', 'dial', 'DIAL', 'native', 'bridge', 'Android', 'cefQuery'];
   var present = [];
   for (var i = 0; i < names.length; i++) {
     var t = descriptorType(window, names[i]);
@@ -62,7 +62,7 @@
   });
   check('window property scan', function () {
     var all = Object.getOwnPropertyNames(window), hits = [];
-    for (var n = 0; n < all.length; n++) if (/sraf|mstar|webui|dial|native|bridge|shell|system|command/i.test(all[n])) hits.push(all[n]);
+    for (var n = 0; n < all.length; n++) if (/sraf|mstar|mtv|api|webui|dial|native|bridge|shell|system|command/i.test(all[n])) hits.push(all[n]);
     return hits.length ? hits.slice(0, 40).join(', ') : 'no matching names';
   });
   check('custom URL schemes', function () {
@@ -99,6 +99,46 @@
       try { r.push(describeValue('sraf.' + p[x], d.value[p[x]])); } catch (e) { r.push('sraf.' + p[x] + '=blocked'); }
     }
     return r.length ? r.join(' | ') : 'no own properties';
+  });
+  check('custom JS extension objects', function () {
+    var keys = ['mtvapiA', 'mtvapiB'], out = [];
+    for (var c = 0; c < keys.length; c++) {
+      var d = Object.getOwnPropertyDescriptor(window, keys[c]);
+      if (!d || d.get || !d.value) { out.push(keys[c] + '=absent'); continue; }
+      var p = Object.getOwnPropertyNames(d.value), vals = [];
+      for (var e = 0; e < p.length && e < 50; e++) {
+        try { vals.push(describeValue(keys[c] + '.' + p[e], d.value[p[e]])); } catch (x) { vals.push(keys[c] + '.' + p[e] + '=blocked'); }
+      }
+      try {
+        var proto = d.value.prototype, pp = Object.getOwnPropertyNames(proto), pvals = [];
+        for (var q = 0; q < pp.length && q < 80; q++) {
+          try { pvals.push(describeValue(keys[c] + '.prototype.' + pp[q], proto[pp[q]])); } catch (y) { pvals.push(keys[c] + '.prototype.' + pp[q] + '=blocked'); }
+        }
+        vals.push('prototype{' + pvals.join(', ') + '}');
+      } catch (z) { vals.push('prototype=blocked'); }
+      
+      if (!vals.length) {
+        vals.push('empty');
+      }
+      out.push(keys[c] + '{' + vals.join(', ') + '}');
+    }
+    return out.join(' | ');
+  });
+  line('--- custom extension getter calls ---');
+  check('new mtvapiA().getIp()', function () {
+    if (typeof window.mtvapiA !== 'function') return 'unavailable';
+    var obj = new window.mtvapiA();
+    return typeof obj.getIp === 'function' ? String(obj.getIp()).slice(0, 120) : 'getter absent';
+  });
+  check('new mtvapiA().getPersonalInfo()', function () {
+    if (typeof window.mtvapiA !== 'function') return 'unavailable';
+    var obj = new window.mtvapiA();
+    return typeof obj.getPersonalInfo === 'function' ? String(obj.getPersonalInfo()).slice(0, 120) : 'getter absent';
+  });
+  check('new mtvapiB().getIp()', function () {
+    if (typeof window.mtvapiB !== 'function') return 'unavailable';
+    var obj = new window.mtvapiB();
+    return typeof obj.getIp === 'function' ? String(obj.getIp()).slice(0, 120) : 'getter absent';
   });
   check('SRAF globals', function () {
     var all = Object.getOwnPropertyNames(window), r = [];

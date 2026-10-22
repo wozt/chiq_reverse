@@ -379,3 +379,9 @@ The browser reported Chrome `47.0.2526.106` with `eval`, `Function`, `JSON`, URL
 ### SRAF JavaScript bridge probe (2026-10-22)
 
 The browser exposes `window.sraf` plus global SRAF wrappers and constants. `sraf_ext` contains native `send`/`sendSync` methods and `ui`, `browser`, `tabs`, and `view` namespaces. Read-only calls from the page succeeded: `browser.isEnableCORS()` returned `false`; `ui.getHomepageUrl()` returned an empty string; `ui.getKeyboardStatus()` returned `undefined`. The WebUI WebSocket on TCP `3697` accepted a handshake, while HbbTV `7681` rejected it. No mutating wrapper, command payload, navigation, file access, or persistence operation was invoked. This is a confirmed browser-to-native UI bridge, not yet an OS or shell escape.
+
+### SRAF custom JavaScript extension audit (2026-10-22)
+
+`libsrafcustomjs.so` registers global constructors `mtvapiA` and `mtvapiB`. Their prototypes expose demo methods (`getIp`, `getPersonalInfo`, `setNetwork`, `changeWeight`, `flyTo`, `goHome`, etc.). Safe getter calls returned only demo values (`undefined`, `true,false,true`, and `My Ip 192.168.0.2`). The library imports no shell, file, socket, or process-execution APIs, so these objects are not an OS bridge.
+
+The common SRAF JavaScript buffer also contains a dormant `inject_ajax_code()` helper that would append an external HTTP jQuery script, but the extracted buffer contains only its definition; no call site was found. No external script was loaded.
