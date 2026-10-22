@@ -240,6 +240,10 @@ A fresh passive SYN scan found the same service state: `3697`, `7681`, `56789`, 
 
 The same portal was queried read-only with the reported serial `G21F01B9CZE0001462` on the German, English, French, Czech, and Belgian endpoints. All five returned “software not found for this serial number.” No public package matching `1.0.3.0.20210319160335_5.1.3_CHiQ_U43H7L_v.1.1.9` was located.
 
+### Exact-version public search (2026-10-22)
+
+Internet Archive metadata searches for `U43H7L`, `HLS90FJ`, `CHIQ_U43H7L`, `JUC7.820.00242703`, and `1.0.3.0.20210319` returned zero items. Chinese repair indexes contain unrelated Changhong packages for other chassis (for example LM38i, ZLH/ZLS, or MT9216); none matches `HLS90FJ-iU`, `m7322`, or the reported 2021 build. These packages must not be treated as interchangeable firmware.
+
 The local official `ChiefUpgrade_m7322_dvb.bin` is an older `v.1.1.8` package for chip `m7322` (the TV reports `v.1.1.9`). Its 64-KiB plain-text MBOOT script contains `force_overwrite`/partition recreation commands for certificate, customer, MBOOT, rootfs, APP, and other partitions, followed by CRC and secure-signature records. It is useful for offline parser comparison only; modifying or installing it would be a full-flash operation, not a safe shell-enablement update.
 
 ### Safe browser feature probe (2026-10-22)
