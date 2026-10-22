@@ -24,11 +24,11 @@ There is no NUL terminator write based on the returned length. A datagram of exa
 
 - Firmware/config provenance: extracted `v1.1.8` recovery image; the TV reports `v1.1.9`.
 - The config declares UDP/7682, but the tested TV boot had UDP/7682 closed.
-- No datagram was sent to the TV.
+- A one-byte UDP probe received `ECONNREFUSED`; the TCP services on 3697, 7681, 56789, and 56790 remained reachable afterward.
+- No malformed 128-byte datagram was sent to the TV.
 
 ## Evidence
 
 - Binary SHA-256: `ef478bf10b2088a90303ebbe489791791639ffaef1c09e228af216252a39233d`
 - Relevant symbols: `SrafCSSWCServer::startWCServer` at `0x9461`, `SrafWallClock::StringToSrafWCMessage` at `0xacd9`.
 - Relocations include `recvfrom@GLIBC_2.4` and `strcmp@GLIBC_2.4`.
-
