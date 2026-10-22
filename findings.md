@@ -355,3 +355,7 @@ The Stark bootstrap fetches `/index.js`, then executes the response with `eval(i
 ### Safe `/proc` read probe attempt (2026-10-22)
 
 A temporary local server served an `index.js` that would read only `/proc/self/status` and report the `Uid:` line through a second local request. The WebUI session registered successfully and one `OpenApp(AMAZON, --js-args=--blastHost=...)` call returned `res:0`, but the TV made no request for `/index.js` or `/report`. Later Amazon launches returned `res:4` and `GetAppList` continued to show only `Sraf OpenBrowser`. Therefore no script executed and no OS file was read; the temporary server and probe were removed.
+
+### Reversible DIAL launch/canary test (2026-10-22)
+
+`POST /apps/AmazonInstantVideo` with the neutral body `probe=1` returned `201 Created`; a read-only status check showed `running`. The advertised `DELETE /apps/AmazonInstantVideo/run` route returned `200`, and status returned to `stopped`. A second reversible launch used `--js-args=--blastHost=http://192.168.2.100:8000` while a local server served a no-op `BlastIgnition.getBlastConfig()` definition. The POST again returned `201`, but the server received no `/index.js` request during observation. Amazon was stopped normally afterward. This confirms DIAL can start the app, but does not confirm that the supplied `--js-args` reaches Stark or enables a remote index.
