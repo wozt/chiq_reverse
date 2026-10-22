@@ -235,24 +235,16 @@ A fresh passive SYN scan found the same service state: `3697`, `7681`, `56789`, 
 
 ### External vulnerability research (2026-10-22)
 
-- The shipped Chromium `47.0.2526.106` predates the fix for **CVE-2016-1629**, which Google fixed in `48.0.2564.116` and described as a critical Blink same-origin bypass plus Chrome sandbox escape: <https://chromereleases.googleblog.com/2016/02/stable-channel-update_18.html>. This is a strong version-level candidate, but the original bug details were kept restricted and no reliable public PoC was found. Applicability to this ARM/SRAF build is therefore unconfirmed; no exploit was sent to the TV.
-- Google also fixed multiple Chromium/V8/PDFium issues in Chrome 48, including CVE-2016-1612 and CVE-2016-1613: <https://chromereleases.googleblog.com/2016/01/stable-channel-update_20.html>. These are renderer-level leads, not a demonstrated root or shell path.
 - A public MStar advisory documents command injection through malicious USB-upgrade filenames on some MStar set-top boxes: <https://github.com/Ivan-Markovic/Command-injections-via-USB-upgrade-in-MSTAR-Set-Top-box>. Our firmware contains a related MBOOT/update parser lead, but model-specific applicability is unconfirmed. Testing would require USB insertion and reboot and remains out of scope because of brick risk.
 - CHiQ's official service portal requires the device serial number and warns that firmware is intended for repair; no public U43H7L package matching this build was found: <https://aftersales.changhong.cz/de/firmwaresearch/>.
 
 The local official `ChiefUpgrade_m7322_dvb.bin` is an older `v.1.1.8` package for chip `m7322` (the TV reports `v.1.1.9`). Its 64-KiB plain-text MBOOT script contains `force_overwrite`/partition recreation commands for certificate, customer, MBOOT, rootfs, APP, and other partitions, followed by CRC and secure-signature records. It is useful for offline parser comparison only; modifying or installing it would be a full-flash operation, not a safe shell-enablement update.
 
-The supplied Tenable reference is useful but does not directly match this TV: plugin 87245 checks **Chrome `<47.0.2526.80`** and recommends `47.0.2526.80` or later. The TV reports Chromium `47.0.2526.106`, so that specific vulnerability bundle is not proven applicable by version alone. The plugin is also a Windows local assessment and lists many generic Chrome CVEs; it does not establish exploitability on this ARM Linux/SRAF build: <https://www.tenable.com/plugins/nessus/87245>.
+### Safe browser feature probe (2026-10-22)
 
-The exact `.106` build is nevertheless below the next stable security line. Google Chrome `48.0.2564.82` fixed CVE-2016-1612 (V8 bad cast) and CVE-2016-1613 (PDFium use-after-free); both records list Chrome versions through `47.0.2526.106` as affected. These are credible renderer-crash/memory-corruption leads, but the public descriptions do not provide a working ARM PoC or prove a shell. Separately, CVE-2016-1629 was fixed only in `48.0.2564.116` and was described by Google as a critical Blink same-origin bypass plus Chrome sandbox escape. The build is therefore a valid research target, but a live exploit attempt would still be speculative and could simply crash/restart the browser.
+`analysis/probes/chromium47-safe-probe.html` fingerprints the reported Chromium version, PDF MIME/plugin presence, selected JavaScript features, and iframe sandbox API. It performs no file reads, socket/WebSocket connections, PDF loads, malformed input, or persistent change.
 
-Offline strings confirm that the shipped browser contains PDFium-related interfaces (`application/pdf`, `PPB_PDF`), so CVE-2016-1613 cannot be dismissed as an obviously absent component. No crafted PDF was opened against the TV.
-
-### Safe browser probe (2026-10-22)
-
-`analysis/probes/chromium47-safe-probe.html` fingerprints the reported Chromium version, PDF MIME/plugin presence, selected JavaScript features, and iframe sandbox API. It performs no file reads, socket/WebSocket connections, PDF loads, malformed input, exploit attempt, or persistent change. Its output cannot prove whether CVE-2016-1612, CVE-2016-1613, or CVE-2016-1629 is patched; a crash-free result is expected.
-
-The TV-side result reported Chromium `47.0.2526.106`, one browser plugin, `27` MIME types, no exposed `application/pdf` MIME handler, no WebAssembly or Proxy, but Symbol, Uint8Array, WebSocket, postMessage, and the iframe sandbox API. This means a normal web page cannot reach a registered PDF plugin through `application/pdf`; it does not prove that PDFium code is absent from the firmware. The result is a fingerprint, not a CVE verdict.
+The TV-side result reported Chromium `47.0.2526.106`, one browser plugin, `27` MIME types, no exposed `application/pdf` MIME handler, no WebAssembly or Proxy, but Symbol, Uint8Array, WebSocket, postMessage, and the iframe sandbox API. This is a feature fingerprint only.
 
 ### Offline Chromium marker audit (2026-10-22)
 
@@ -269,10 +261,6 @@ The same browser binary also contains Chromium DevTools protocol code and the `r
 Public parts listings identify the U43H7L mainboard as `JUC7.820.00242703 / C430Y19-7N / HLS90FJ-iU`; the photographed board has the same markings and a matching U43H7L label: <https://www.ebay.de/itm/285943464271>, <https://vareza.de/u43h7n-juc7-820-00242703-c430y19-7n-hls90fj-iu-mainboard.html?language=de>. The available top-side photos do not expose a clearly labeled UART header or pad. They confirm board identity only; they do not identify the `UART-TX`/`UART-RX` physical pads.
 
 The available mainboard schematic (`analysis/schematics/mainboard-page-8.png`, sheet 8/15) marks separate `UART-TX` and `UART-RX` nets next to the HDMI2 block, inside a green `ISP debug` annotation. The arrows point to schematic page 2; they are net cross-references, not HDMI connector pin numbers. This page provides no physical test-pad reference, voltage, or UART ground pin, so the exact board header cannot be identified from the supplied documentation. HDMI2 pins must not be used as UART pins.
-
-### Upstream CVE record check (2026-10-22)
-
-The public Chromium record for CVE-2016-1612 is issue `497632`; its fix was merged to the 4.7 branch as V8 `4.7.80.29`. The extracted browser contains the string `4.7.80.25`, which is an additional version-level indication that this V8 fix is absent, but it is not a live proof or an exploit. The upstream report describes a renderer crash and the details are not a safe TV test. CVE-2016-1613 remains a crafted-PDF PDFium use-after-free; no public, reliable ARM reproduction was found. CVE-2016-1629 remains an unspecified Blink/sandbox issue with restricted details. References: <https://bugs.chromium.org/p/chromium/issues/detail?id=497632>, <https://nvd.nist.gov/vuln/detail/cve-2016-1613>, <https://nvd.nist.gov/vuln/detail/cve-2016-1629>.
 
 ### Neutral WebSocket canary (2026-10-22)
 
@@ -374,7 +362,7 @@ The shipped `utils/commandLine.js` documents the exact syntax `--js-args="--mySt
 
 ### Chromium 47 JavaScript API probe (2026-10-22)
 
-The browser reported Chrome `47.0.2526.106` with `eval`, `Function`, `JSON`, URL objects, Web Storage, iframe sandbox/postMessage, WebSocket, fetch, Promise, and typed arrays available. `Proxy` and WebAssembly were absent. The probe only fingerprinted APIs and sent its text result to the local harness; it did not read files, load PDF data, attempt a CVE, or persist state. These results identify browser features only and do not establish exploitability.
+The browser reported Chrome `47.0.2526.106` with `eval`, `Function`, `JSON`, URL objects, Web Storage, iframe sandbox/postMessage, WebSocket, fetch, Promise, and typed arrays available. `Proxy` and WebAssembly were absent. The probe only fingerprinted APIs and sent its text result to the local harness; it did not read files, load PDF data, send malformed input, or persist state. These results identify browser features only.
 
 ### SRAF JavaScript bridge probe (2026-10-22)
 
