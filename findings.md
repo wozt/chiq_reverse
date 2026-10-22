@@ -91,7 +91,7 @@ Static inspection of `OpenNativeUI` shows it prepends the fixed `open_from_webui
 **Severity:** High after any local file-write primitive
 **Status:** Confirmed in the recovered `v1.1.8` image; not verified against the installed `v1.1.9` image
 
-`/etc/init.d/rcS` mounts `/Customer` and executes `chmod 777 /Customer`. The `/etc/profile` symlink points to `/Customer/profile`, whose root branch runs executable `/Customer/setup.sh`. The same profile checks `/Customer/enable_mount_config_rw` and mounts `CONFIG` read-write when that marker exists. Any unprivileged component able to create or replace files in `/Customer` would therefore gain a root-executed boot hook after reboot/login. No network file-write primitive has been demonstrated and no TV file was modified.
+`/etc/init.d/rcS` mounts `/Customer` and executes `chmod 777 /Customer`. It then executes `/Customer/bootlogo/FastLogo.sh` as root whenever that path exists, without checking its executable bit. The `/etc/profile` symlink points to `/Customer/profile`, whose root branch runs executable `/Customer/setup.sh`. The same profile checks `/Customer/enable_mount_config_rw` and mounts `CONFIG` read-write when that marker exists. Any unprivileged component able to create or replace files in `/Customer` would therefore gain a root-executed boot hook after reboot/login. No network file-write primitive has been demonstrated and no TV file was modified.
 
 Evidence: [analysis/persistence-audit.md](/home/wozt/dev/chiqtvhack/analysis/persistence-audit.md).
 
