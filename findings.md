@@ -460,3 +460,21 @@ The selected ARM media libraries have no `__stack_chk_fail` reference and no `GN
 This is a credible local native-parser crash/RCE surface, not a demonstrated shell path. A parser compromise would still require a media-process escape and a privilege boundary crossing. No malformed media was created or sent. Detailed evidence is in `analysis/media-player-audit.md`.
 
 `libmmplayerservice.so` registers a Binder service named `mstar.mmplayer` with media-item creation, file-process callbacks, partial-payload, metadata/thumbnail, subtitle, and shared-memory operations. USB and subtitle services are Binder-only and the reviewed service libraries import no socket or shell execution APIs. This is a sizeable local IPC surface, but no direct LAN path or WebUI Binder transaction was identified.
+
+### DIAL support-library audit (2026-10-22)
+
+The HTTP/DIAL implementation was extracted from the recovered `MSLIB.img` as
+[`analysis/dial-libs/libdialapm.so`](analysis/dial-libs/libdialapm.so). It is an
+ARM ELF (53,060 bytes) with socket/HTTP and file-I/O imports, but no
+`system()`, `exec*()`, `popen()`, or `fork()` imports. Launch handling calls
+APM/application callbacks; the payload remains app data/arguments rather than
+an executable path or shell command.
+
+The reviewed HTTP body read is limited to 4096 bytes within a larger stack
+frame, and parameter construction uses bounded `strncpy()`/`snprintf()` calls.
+No direct overwrite, command-execution, or persistent-write primitive was
+established. The Netflix payload path is `/dev/shm/dial_argv` (volatile).
+
+Unauthenticated LAN app-control and permissive CORS/Origin handling remain
+security weaknesses, but current evidence supports reversible app launch/stop,
+not a root shell. No malformed request was sent to the TV.

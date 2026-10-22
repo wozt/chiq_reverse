@@ -10,6 +10,29 @@ The deployed application table restricts the known entries to Netflix, YouTube, 
 
 The local `execv()` helper has no direct call from the visible main path; it is likely legacy/callback code supplied to the DIAL support library. No shell metacharacter expansion or network-controlled executable path was established. Live DIAL tests previously confirmed reversible app start/stop but did not expose an additional route.
 
+## DIAL support-library audit (2026-10-22)
+
+The request-handling library was extracted from the recovered `MSLIB.img` as
+`analysis/dial-libs/libdialapm.so` (ARM ELF, 53,060 bytes). This is the library
+that implements the HTTP/DIAL paths behind the small `dialserver` launcher.
+
+The library imports socket/HTTP, `dlopen`, and file I/O functions, but no
+`system()`, `exec*()`, `popen()`, or `fork()`. Its exported launch path calls
+`APM_RequestToRunWithParam()` and application callbacks. The configured payload
+is treated as application data/arguments; it is not converted into a shell
+command or an executable path.
+
+The HTTP body read uses a 4096-byte limit into a larger stack frame, and the
+reviewed parameter builders use bounded `strncpy()`/`snprintf()` operations.
+This does not prove the parser bug-free, but no direct overwrite or command
+execution primitive was established from the static review. The Netflix
+payload file remains `/dev/shm/dial_argv`, a volatile path.
+
+The library contains permissive CORS/Origin handling and unauthenticated DIAL
+app-control routes. That is a real access-control weakness on the LAN, but it
+currently provides reversible app launch/stop rather than root shell access or
+persistent modification. No malformed request was sent to the TV.
+
 ## Security boundary
 
 DIAL remains a useful app-control surface, but the recovered evidence does not show a network-to-root shell or persistent-write primitive. No payload was used to alter executable paths or launch unknown binaries.
