@@ -1,0 +1,20 @@
+# Local/editor state
+.mcp.json
+**/__pycache__/
+*.py[cod]
+*.swp
+
+# Extracted/proprietary firmware and device dumps
+analysis/firmware/
+analysis/partitions/
+analysis/appfs/
+analysis/rootfs/
+analysis/configfs/
+analysis/customerfs/
+artifacts/
+
+# Local schematics/exports not intended for redistribution
+analysis/schematics/*.pdf
+
+# Private signing material and bundled binaries from the helper tool
+tools/

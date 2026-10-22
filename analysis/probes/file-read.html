@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Read-only file URL probe</title>
+<pre id="out">starting…</pre>
+<script>
+var out = document.getElementById('out');
+function line(s) { out.textContent += '\n' + s; }
+function probe(url) {
+  var x = new XMLHttpRequest();
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4) return;
+    line(url + ': status ' + x.status + ', ' + x.responseText.length + ' bytes');
+    line(x.responseText.slice(0, 600));
+  };
+  x.onerror = function () { line(url + ': network/error'); };
+  try { x.open('GET', url, true); x.send(); }
+  catch (e) { line(url + ': ' + e.name + ': ' + e.message); }
+}
+out.textContent = 'UA: ' + navigator.userAgent;
+probe('file:///etc/passwd');
+probe('file:///proc/self/status');
+</script>

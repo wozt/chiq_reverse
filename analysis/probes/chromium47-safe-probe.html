@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Chromium 47 safe surface probe</title>
+<style>
+  body { background:#111; color:#ddd; font:16px monospace; margin:2em; }
+  h1 { color:#7fd; font-size:1.2em; }
+  .warn { color:#fd7; }
+  pre { white-space:pre-wrap; word-break:break-word; }
+</style>
+<h1>SAFE SURFACE PROBE — no exploit, no crash payload</h1>
+<p class="warn">This page only fingerprints browser features. It does not read files, open sockets, load a PDF, or attempt a vulnerability.</p>
+<pre id="out">starting...</pre>
+<script>
+(function () {
+  var out = document.getElementById('out');
+  function line(s) { out.textContent += '\n' + s; }
+  function yesno(v) { return v ? 'yes' : 'no'; }
+  function safe(name, fn) {
+    try { line(name + ': ' + fn()); }
+    catch (e) { line(name + ': exception ' + e.name + ': ' + e.message); }
+  }
+
+  out.textContent = 'SAFE SURFACE PROBE';
+  line('time: ' + new Date().toISOString());
+  line('location: ' + location.href);
+  line('UA: ' + navigator.userAgent);
+
+  var m = navigator.userAgent.match(/(?:Chrome|Chromium)[/]([0-9.]+)/i);
+  line('reported Chromium/Chrome version: ' + (m ? m[1] : 'not parsed'));
+
+  safe('navigator.plugins.length', function () { return navigator.plugins.length; });
+  safe('navigator.mimeTypes.length', function () { return navigator.mimeTypes.length; });
+  safe('PDF MIME application/pdf', function () {
+    return !!navigator.mimeTypes['application/pdf'];
+  });
+  safe('PDF plugin name', function () {
+    var p = navigator.mimeTypes['application/pdf'];
+    return p && p.enabledPlugin ? (p.enabledPlugin.name || '(unnamed)') : 'none';
+  });
+
+  line('engine feature presence (not a vulnerability test):');
+  line('  WebAssembly: ' + yesno(typeof window.WebAssembly === 'object' || typeof window.WebAssembly === 'function'));
+  line('  Proxy: ' + yesno(typeof window.Proxy === 'function'));
+  line('  Symbol: ' + yesno(typeof window.Symbol === 'function'));
+  line('  Uint8Array: ' + yesno(typeof window.Uint8Array === 'function'));
+  line('  WebSocket constructor: ' + yesno(typeof window.WebSocket === 'function'));
+  line('  postMessage: ' + yesno(typeof window.postMessage === 'function'));
+
+  safe('iframe sandbox API', function () {
+    var f = document.createElement('iframe');
+    return 'sandbox' in f ? 'present' : 'absent';
+  });
+  safe('iframe sandbox token list', function () {
+    var f = document.createElement('iframe');
+    if (!('sandbox' in f)) return 'unsupported';
+    f.setAttribute('sandbox', 'allow-scripts');
+    return String(f.getAttribute('sandbox'));
+  });
+  safe('ordinary JS getter/setter', function () {
+    var o = {}, value = 0;
+    Object.defineProperty(o, 'x', {
+      configurable: true,
+      get: function () { return value; },
+      set: function (v) { value = v; }
+    });
+    o.x = 7;
+    return o.x === 7 ? 'works' : 'unexpected result';
+  });
+
+  line('RESULT: fingerprint only; no CVE status can be inferred from this page.');
+}());
+</script>
