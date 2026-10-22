@@ -311,3 +311,7 @@ This is the SRAF browser input path, not the HomePortal receiver for WebUI event
 `/Customer/profile` starts `bigbang` with `--enable_no_root` when `/etc/cap_control.ini` is present. The configured identities are `APPMGR` UID/GID `2900` with `CAP_SYS_NICE|CAP_KILL`, `WebUIService`/`HomePortal` UID/GID `2903` with `CAP_SYS_NICE`, and `SrafBrowserEngine` UID/GID `10020` with `CAP_SYS_NICE` only. The active SRAF command line contains only `--sraf-app=HbbTV --enable-plugin-in-process --disable-web-security`.
 
 The only MstarLauncher remote-inspector option is commented out in `app.cfg`; no active launch entry enables it. A browser compromise would therefore still require a separate local privilege or IPC escape before it could reach the APM shell or persistence paths.
+
+### WebUI APM argument-target cross-check (2026-10-22)
+
+`OpenApp` accepts an application name before passing it to APM, so the static `param_from_argv=y` entries were checked against the actual `APP.img`. The configured `RESET_QJY` and `Vudu` executables are absent from the shipped image and appear to be stale configuration; they do not provide a usable launch target. The active `Netflix_resetNetflix` target only implements Netflix reset/cache operations. `AMAZON` is present and accepts application parameters, but its visible command-line markers are app-specific (`--deeplink`, `--dial-payload`, `--js-args`); no shell or executable-path argument is exposed. This leaves an app-argument launch surface for further offline review, not a demonstrated WebUI-to-shell path.
