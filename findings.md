@@ -393,3 +393,13 @@ The common SRAF JavaScript buffer also contains a dormant `inject_ajax_code()` h
 ### SRAF IPC dispatcher audit (2026-10-22)
 
 The stripped browser binary still exposes `sraf::MsgHandleContext::HandleSyncIPCOnUI` and `HandleAsyncIPCOnUI`. The asynchronous dispatcher reads an integer selector, accepts only seven consecutive values (`1001`–`1007`), and routes them to fixed UI virtual methods; the synchronous path handles the same small selector set and serializes the result through the SRAF IPC client. The inspected handlers consume bounded JSON integer fields and call browser/UI objects. No `system`, `exec*`, `popen`, `dlopen`, or `dlsym` import is present in `sraf_browser_bin`, and no file/process primitive is reached from these dispatchers. This confirms that `sraf_ext.send/sendSync` is an IPC-backed browser/UI command bridge, not an exposed shell or library-loader interface.
+
+### Chromium CVE source audit (2026-10-22)
+
+Downloaded upstream source snapshots and version comparisons are stored in `analysis/cves/chromium-47/`. No exploit code was executed or sent to the TV.
+
+- **CVE-2015-6765 / CVE-2015-6766 / CVE-2015-6767 (AppCache):** the `.69` → `.73` diff adds weak-pointer callback ownership, failed-entry bookkeeping, and destruction-time checks in the AppCache update/dispatcher paths. The affected files are unchanged in `.106`. The TV binary contains extensive AppCache symbols, so the component is present; the exact fork patch level is not proven from symbols alone.
+- **CVE-2015-8664 (WebCursor):** `.106` changes the RGBA length check from `>` to exact equality with `width * height * 4`. The TV binary contains both `../../content/common/cursors/webcursor.cc` and the `.106` diagnostic string `WebCursor's data length and image size mismatch`, strongly indicating that this fix is compiled in.
+- **CVE-2015-6792 (MIDI):** `.106` keeps the client-membership lock across the send acknowledgement and routes the ALSA callback through `MidiManagerAlsa`; `.69`/`.73` use the older callback path. The TV binary contains `requestMIDIAccess`, `MidiHost`, and ALSA markers, so Web MIDI is compiled in, but the stripped binary does not prove the exact patched implementation. No MIDI or malformed-data test was run.
+
+The TV reports Chromium `47.0.2526.106`, which is the upstream fix floor for the WebCursor and MIDI CVEs above. This does not prove security of the custom ARM/SRAF fork; it only narrows the static comparison target.
