@@ -359,3 +359,7 @@ A temporary local server served an `index.js` that would read only `/proc/self/s
 ### Reversible DIAL launch/canary test (2026-10-22)
 
 `POST /apps/AmazonInstantVideo` with the neutral body `probe=1` returned `201 Created`; a read-only status check showed `running`. The advertised `DELETE /apps/AmazonInstantVideo/run` route returned `200`, and status returned to `stopped`. A second reversible launch used `--js-args=--blastHost=http://192.168.2.100:8000` while a local server served a no-op `BlastIgnition.getBlastConfig()` definition. The POST again returned `201`, but the server received no `/index.js` request during observation. Amazon was stopped normally afterward. This confirms DIAL can start the app, but does not confirm that the supplied `--js-args` reaches Stark or enables a remote index.
+
+### Ignition argument parser cross-check (2026-10-22)
+
+The shipped `utils/commandLine.js` documents the exact syntax `--js-args="--myString=foo"`; `parseArgs()` exposes the inner key through `commandLine.args`. Native `ApplicationJsCompartment::_passFlagsToJsEnvironment()` recognizes `js-args`, `dial-payload`, and `deeplink`, while `setDialPayload()` only stores `commandLine.dialPayload`. The DIAL configuration uses `payload_prefix=--dialpayload` (without the hyphen used by Ignition's registered `--dial-payload` option). A reversible WebUI launch using both quoted and unquoted `--js-args=--blastHost=...` returned `res:0` and started Amazon, but a local canary still received no `/index.js`; the argument-to-Stark path remains unconfirmed.
