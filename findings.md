@@ -545,3 +545,7 @@ The image contains `sraf/bin/sraf_browser_bin` and `libqjyPost.so`, but no `qjyB
 The official RFS image contains `etc/inittab` with `ttyS0::respawn:-/bin/sh`, so the stock system is configured for an interactive shell on the serial console. `CONFIG` also contains `BOOT_DISABLEUART=0`. This confirms a UART shell path in software, subject to board access and wiring.
 
 `etc/init.d/rcS` contains a commented template line, `#/bin/telnetd -l /bin/sh`, but no `telnetd` executable or symlink was found in RFS; only `usr/bin/telnet -> ../../bin/busybox` is present. The stock image therefore does not expose a network telnet service. No file or firmware modification was made.
+
+### Telnet-enable update feasibility (2026-10-23)
+
+Uncommenting the `rcS` line would not be sufficient: the referenced `/bin/telnetd` is absent, and the BusyBox image has no `telnetd` applet marker. The RFS update is also followed by `store_secure_info ROOTFSSign`; with `SECURE_BOOTING_ENABLE=1`, changing one byte in the SquashFS invalidates the signed partition. A usable update would require the OEM signing key and matching vendor tooling, neither of which is present in the artifact. No modified or flashable update was generated.
