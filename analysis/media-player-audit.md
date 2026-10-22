@@ -16,3 +16,9 @@ Date: 2026-10-22
 This is a credible local crash/RCE surface because many old native parsers and hardware codecs process USB-controlled bytes, especially containers, subtitles, JPEG/MPO, and codec extradata. It is separate from Chromium and does not automatically provide a shell: a parser compromise would still need to escape the media process and then cross the platform privilege boundary.
 
 No malformed media was generated or sent to the TV. The safe next step is offline analysis of these ARM libraries and their Binder interfaces; an active malformed-file test should only be considered with a recovery plan because it can hang or reboot the TV.
+
+## Binder reachability
+
+`libmmplayerservice.so` registers a Binder service named `mstar.mmplayer`. Its interface includes `MM_CreateMediaItem`, `MM_SetFileProcessInfo`, `MM_PushPayloadPartial`, metadata/thumbnail operations, subtitle controls, and shared-memory buffer operations. `libusbmassstoragemanagerservice.so` similarly exposes a Binder-only USB mount list, and the subtitle/player service libraries contain no socket, `exec*`, `system`, or `popen` imports.
+
+This confirms a sizeable local IPC attack surface, but not a LAN entry point. The current WebUI command table does not expose Binder transactions directly, and no network socket is imported by the reviewed media services.
