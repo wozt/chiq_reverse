@@ -495,3 +495,13 @@ Safe live reachability checks using the valid body `a=b` returned `403
 Forbidden` for both `/apps/HbbTV/dial_data` and
 `/apps/AmazonInstantVideo/dial_data`. The parser was not reached; Amazon
 remained stopped and the DIAL service stayed healthy.
+
+### HbbTV `libcs.so` reachability audit (2026-10-22)
+
+The configured HbbTV library [`libcs.so`](analysis/dial-libs/libcs.so) exposes
+Binder-only create/launch/stop/status methods. It has no shell/process imports
+or TCP listener; its `socket()` use is for local interface discovery. The
+configuration sets `auto_register_app=0`, with `/tmp/dial_data` only in that
+disabled HbbTV block. This explains the live `403` results and leaves the
+`libdialapm.so` parser bug as an offline candidate rather than a reachable
+LAN exploit. No Binder call was attempted.
