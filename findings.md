@@ -375,3 +375,7 @@ The shipped `utils/commandLine.js` documents the exact syntax `--js-args="--mySt
 ### Chromium 47 JavaScript API probe (2026-10-22)
 
 The browser reported Chrome `47.0.2526.106` with `eval`, `Function`, `JSON`, URL objects, Web Storage, iframe sandbox/postMessage, WebSocket, fetch, Promise, and typed arrays available. `Proxy` and WebAssembly were absent. The probe only fingerprinted APIs and sent its text result to the local harness; it did not read files, load PDF data, attempt a CVE, or persist state. These results identify browser features only and do not establish exploitability.
+
+### SRAF JavaScript bridge probe (2026-10-22)
+
+The browser exposes `window.sraf` plus global SRAF wrappers and constants. `sraf_ext` contains native `send`/`sendSync` methods and `ui`, `browser`, `tabs`, and `view` namespaces. Read-only calls from the page succeeded: `browser.isEnableCORS()` returned `false`; `ui.getHomepageUrl()` returned an empty string; `ui.getKeyboardStatus()` returned `undefined`. The WebUI WebSocket on TCP `3697` accepted a handshake, while HbbTV `7681` rejected it. No mutating wrapper, command payload, navigation, file access, or persistence operation was invoked. This is a confirmed browser-to-native UI bridge, not yet an OS or shell escape.

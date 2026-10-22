@@ -10,6 +10,19 @@
   var report = [];
   function line(s) { report.push(s); out.textContent += '\n' + s; }
   function check(name, fn) { try { line(name + ': ' + fn()); } catch (e) { line(name + ': exception ' + e.name + ': ' + e.message); } }
+  function descriptorType(obj, key) {
+    try {
+      var d = Object.getOwnPropertyDescriptor(obj, key);
+      if (!d) return 'absent';
+      return d.get ? 'getter' : typeof d.value;
+    } catch (e) { return 'blocked:' + e.name; }
+  }
+  function sendReport() {
+    try {
+      var beacon = new Image();
+      beacon.src = '/report?data=' + encodeURIComponent(report.join('\n'));
+    } catch (e) {}
+  }
   out.textContent = 'SAFE JAVASCRIPT PROBE';
   line('location: ' + location.href);
   line('origin: ' + (location.origin || '(origin property absent)'));
@@ -29,10 +42,147 @@
   check('Proxy', function () { return typeof window.Proxy === 'function' ? 'present' : 'absent'; });
   check('WebAssembly', function () { return typeof window.WebAssembly === 'object' || typeof window.WebAssembly === 'function' ? 'present' : 'absent'; });
   check('typed arrays', function () { return typeof Uint8Array === 'function' ? 'present' : 'absent'; });
-  line('RESULT: feature/API probe only; no file, PDF, exploit, or persistent write attempted.');
-  try {
-    var beacon = new Image();
-    beacon.src = '/report?data=' + encodeURIComponent(report.join('\n'));
-  } catch (e) {}
+
+  line('--- integration surface ---');
+  var names = ['webkit', 'chrome', 'external', 'sraf', 'SRAF', 'WebUI', 'webui', 'mstar', 'MStar', 'tv', 'TV', 'dial', 'DIAL', 'native', 'bridge', 'Android', 'cefQuery'];
+  var present = [];
+  for (var i = 0; i < names.length; i++) {
+    var t = descriptorType(window, names[i]);
+    if (t !== 'absent') present.push(names[i] + '=' + t);
+  }
+  line('window bridge candidates: ' + (present.length ? present.join(', ') : 'none'));
+  check('window.name', function () { return String(window.name || '(empty)').slice(0, 80); });
+  check('navigator plugins', function () { return navigator.plugins ? navigator.plugins.length : 'absent'; });
+  check('navigator mimeTypes', function () { return navigator.mimeTypes ? navigator.mimeTypes.length : 'absent'; });
+  check('navigator extras', function () {
+    var k = ['getUserMedia', 'registerProtocolHandler', 'sendBeacon', 'serviceWorker', 'usb', 'bluetooth'];
+    var r = [];
+    for (var j = 0; j < k.length; j++) r.push(k[j] + '=' + typeof navigator[k[j]]);
+    return r.join(', ');
+  });
+  check('window property scan', function () {
+    var all = Object.getOwnPropertyNames(window), hits = [];
+    for (var n = 0; n < all.length; n++) if (/sraf|mstar|webui|dial|native|bridge|shell|system|command/i.test(all[n])) hits.push(all[n]);
+    return hits.length ? hits.slice(0, 40).join(', ') : 'no matching names';
+  });
+  check('custom URL schemes', function () {
+    var schemes = ['file:', 'javascript:', 'sraf:', 'dial:', 'app:', 'native:'], r = [];
+    for (var q = 0; q < schemes.length; q++) { var a = document.createElement('a'); a.href = schemes[q] + '//probe'; r.push(schemes[q] + '->' + a.protocol); }
+    return r.join(', ');
+  });
+  check('sandbox enforcement', function () {
+    var f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-scripts');
+    f.src = 'data:text/html,<script>parent.postMessage("sandbox-ok","*")<\\/script>';
+    document.body.appendChild(f);
+    setTimeout(function () { try { document.body.removeChild(f); } catch (e) {} }, 250);
+    return 'created allow-scripts data iframe';
+  });
+
+  line('--- SRAF bridge inventory (no calls) ---');
+  function describeValue(name, value) {
+    var t = typeof value;
+    if (t === 'function') {
+      var src = '';
+      try { src = Function.prototype.toString.call(value).replace(/[\r\n]+/g, ' ').slice(0, 120); } catch (e) { src = 'toString blocked'; }
+      return name + '=function ' + src;
+    }
+    if (value === null) return name + '=null';
+    if (t === 'object') return name + '=object';
+    return name + '=' + t + ':' + String(value).slice(0, 80);
+  }
+  check('window.sraf properties', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf');
+    if (!d || !d.value) return 'unavailable';
+    var p = Object.getOwnPropertyNames(d.value), r = [];
+    for (var x = 0; x < p.length && x < 80; x++) {
+      try { r.push(describeValue('sraf.' + p[x], d.value[p[x]])); } catch (e) { r.push('sraf.' + p[x] + '=blocked'); }
+    }
+    return r.length ? r.join(' | ') : 'no own properties';
+  });
+  check('SRAF globals', function () {
+    var all = Object.getOwnPropertyNames(window), r = [];
+    for (var y = 0; y < all.length && r.length < 100; y++) {
+      if (!/^sraf_|^SRAF_CMD_/.test(all[y])) continue;
+      var d = Object.getOwnPropertyDescriptor(window, all[y]);
+      if (!d || d.get) { r.push(all[y] + '=getter'); continue; }
+      try { r.push(describeValue(all[y], d.value)); } catch (e) { r.push(all[y] + '=blocked'); }
+    }
+    return r.length ? r.join(' | ') : 'none';
+  });
+  check('sraf_ext properties', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value) return 'unavailable';
+    var p = Object.getOwnPropertyNames(d.value), r = [];
+    for (var z = 0; z < p.length && z < 80; z++) {
+      try { r.push(describeValue('sraf_ext.' + p[z], d.value[p[z]])); } catch (e) { r.push('sraf_ext.' + p[z] + '=blocked'); }
+    }
+    return r.length ? r.join(' | ') : 'no own properties';
+  });
+  check('sraf_ext nested APIs', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value) return 'unavailable';
+    var root = d.value, groups = ['commandType', 'ui', 'browser', 'tabs', 'view'], outGroups = [];
+    for (var g = 0; g < groups.length; g++) {
+      var obj = root[groups[g]], parts = [];
+      if (!obj) { outGroups.push(groups[g] + '=absent'); continue; }
+      var props = Object.getOwnPropertyNames(obj);
+      for (var h = 0; h < props.length && h < 80; h++) {
+        try { parts.push(describeValue(groups[g] + '.' + props[h], obj[props[h]])); } catch (e) { parts.push(groups[g] + '.' + props[h] + '=blocked'); }
+      }
+      outGroups.push(groups[g] + '{' + (parts.length ? parts.join(', ') : 'empty') + '}');
+    }
+    return outGroups.join(' | ');
+  });
+  check('SRAF wrapper source', function () {
+    var wanted = ['sraf_browser_create_elements', 'sraf_load_url_from_link', 'sraf_browser_get_oipf_config_object', 'sraf_openinet_user_js_listener', 'sraf_common_user_js_listener'];
+    var r = [];
+    for (var w = 0; w < wanted.length; w++) {
+      var d = Object.getOwnPropertyDescriptor(window, wanted[w]);
+      if (!d || typeof d.value !== 'function') { r.push(wanted[w] + '=absent'); continue; }
+      var src = '';
+      try { src = Function.prototype.toString.call(d.value).replace(/[\r\n]+/g, ' ').slice(0, 300); } catch (e) { src = 'toString blocked'; }
+      r.push(wanted[w] + '=' + src);
+    }
+    return r.join(' | ');
+  });
+  check('sraf prototype', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf');
+    if (!d || !d.value) return 'unavailable';
+    var p = Object.getPrototypeOf(d.value);
+    return p ? Object.prototype.toString.call(p) : 'null';
+  });
+  line('--- SRAF read-only getter calls ---');
+  check('ui.getHomepageUrl()', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value || !d.value.ui || typeof d.value.ui.getHomepageUrl !== 'function') return 'unavailable';
+    return String(d.value.ui.getHomepageUrl()).slice(0, 200);
+  });
+  check('browser.isEnableCORS()', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value || !d.value.browser || typeof d.value.browser.isEnableCORS !== 'function') return 'unavailable';
+    return String(d.value.browser.isEnableCORS());
+  });
+  check('ui.getKeyboardStatus()', function () {
+    var d = Object.getOwnPropertyDescriptor(window, 'sraf_ext');
+    if (!d || !d.value || !d.value.ui || typeof d.value.ui.getKeyboardStatus !== 'function') return 'unavailable';
+    return String(d.value.ui.getKeyboardStatus());
+  });
+
+  line('--- read-only WebSocket handshake ---');
+  function wsProbe(label, url) {
+    try {
+      var ws = new WebSocket(url), done = false;
+      function finish(result) { if (done) return; done = true; line(label + ': ' + result); try { ws.close(); } catch (e) {} }
+      ws.onopen = function () { finish('open (no message sent)'); };
+      ws.onerror = function () { finish('error'); };
+      ws.onclose = function () { if (!done) finish('closed'); };
+      setTimeout(function () { finish('timeout'); }, 1800);
+    } catch (e) { line(label + ': constructor ' + e.name); }
+  }
+  wsProbe('WebUI 3697', 'ws://192.168.2.211:3697');
+  wsProbe('HbbTV 7681', 'ws://192.168.2.211:7681');
+  line('RESULT: advanced surface inventory only; no file, PDF, exploit, command, or persistent write attempted.');
+  setTimeout(sendReport, 2200);
 }());
 </script>
