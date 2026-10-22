@@ -286,4 +286,6 @@ The destination is the APM default application (`HomePortal`, configured as `/ap
 
 `GetAppNameFromUrl()` uses an exact URL-map lookup, not a prefix or wildcard match. The fixed `file:///index.html` owner registration therefore bypasses session ownership but does not provide arbitrary URL-to-app mapping.
 
+A fresh live check confirmed the distinction: `file:///not-mapped.html` returned `res:1`, `file:///index.html` returned `res:0`, and `GetApiVersion` then returned `0.3` on the same connection.
+
 Live read-only verification reached all getter methods normally. A direct `GetSymbolAddress` request produced no response, while a fresh session continued to answer `GetApiVersion` and `GetNetworkInfo`; no remote loader or symbol lookup was observed. The remaining useful WebUI work is receiver-side parsing of the APM `open_from_webui:` event, which requires offline inspection only; no state-changing WebUI method was sent in this review.
