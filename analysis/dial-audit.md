@@ -50,6 +50,13 @@ method/origin checks, allocator layout, and downstream use still need to be
 established. No malformed body was sent to the TV, and no crash test is
 authorized.
 
+### Safe live reachability check (2026-10-22)
+
+Valid short POST bodies (`a=b`) to `/apps/HbbTV/dial_data` and
+`/apps/AmazonInstantVideo/dial_data` both returned `403 Forbidden`. The parser
+was not reached. A subsequent read-only Amazon status request returned `200`
+with state `stopped`; no service instability was observed.
+
 ## Security boundary
 
 DIAL remains a useful app-control surface, but the recovered evidence does not show a network-to-root shell or persistent-write primitive. No payload was used to alter executable paths or launch unknown binaries.

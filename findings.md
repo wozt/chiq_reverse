@@ -490,3 +490,8 @@ confirms the heap-buffer-overflow locally ([harness](analysis/dial-parse-harness
 This is a confirmed static memory-safety defect in the recovered DIAL library,
 not yet a confirmed TV crash or RCE. Route reachability, allocator layout, and
 post-parse use remain unverified. No malformed body was sent to the TV.
+
+Safe live reachability checks using the valid body `a=b` returned `403
+Forbidden` for both `/apps/HbbTV/dial_data` and
+`/apps/AmazonInstantVideo/dial_data`. The parser was not reached; Amazon
+remained stopped and the DIAL service stayed healthy.
